@@ -13,12 +13,10 @@ const CustomerDetailsPage: React.FC = () => {
   const id = params.id as string;
   const { data, isLoading, isError } = useGetCustomerQuery(id);
 
-  // State for mutation status
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Mutation hook
   const [sendEmail] = useSendEmailForNotPaidOrdersMutation();
 
   if (isLoading) {
@@ -32,7 +30,6 @@ const CustomerDetailsPage: React.FC = () => {
   const customer = data.data;
   console.log("customer", customer);
 
-  // Function to handle email sending
   const handleSendEmail = async () => {
     setIsSending(true);
     setSendError(null);
@@ -115,35 +112,43 @@ const CustomerDetailsPage: React.FC = () => {
             <div className="space-y-2">
               <p className="text-gray-600">
                 <span className="font-medium text-gray-800">Credit App:</span>
-                {customer.creditApplication ? (
+                {typeof customer?.creditApplication === "string" && customer.creditApplication.length > 5 ? (
                   <a href={customer.creditApplication} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
-                    View PDF
+                    View
                   </a>
-                ) : <span className="text-gray-500">N/A</span>}
+                ) : (
+                  <span className="text-gray-500 ml-1">Not Set</span>
+                )}
               </p>
               <p className="text-gray-600">
                 <span className="font-medium text-gray-800">Legal Front:</span>
-                {customer.ownerLegalFrontImage ? (
+                {typeof customer?.ownerLegalFrontImage === "string" && customer.ownerLegalFrontImage.length > 5 ? (
                   <a href={customer.ownerLegalFrontImage} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
-                    View Image
+                    View
                   </a>
-                ) : <span className="text-gray-500">N/A</span>}
+                ) : (
+                  <span className="text-gray-500 ml-1">Not Set</span>
+                )}
               </p>
               <p className="text-gray-600">
                 <span className="font-medium text-gray-800">Legal Back:</span>
-                {customer.ownerLegalBackImage ? (
+                {typeof customer?.ownerLegalBackImage === "string" && customer.ownerLegalBackImage.length > 5 ? (
                   <a href={customer.ownerLegalBackImage} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
-                    View Image
+                    View
                   </a>
-                ) : <span className="text-gray-500">N/A</span>}
+                ) : (
+                  <span className="text-gray-500 ml-1">Not Set</span>
+                )}
               </p>
               <p className="text-gray-600">
                 <span className="font-medium text-gray-800">Voided Check:</span>
-                {customer.voidedCheckImage ? (
+                {typeof customer?.voidedCheckImage === "string" && customer.voidedCheckImage.length > 5 ? (
                   <a href={customer.voidedCheckImage} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline ml-1">
-                    View Image
+                    View
                   </a>
-                ) : <span className="text-gray-500">N/A</span>}
+                ) : (
+                  <span className="text-gray-500 ml-1">Not Set</span>
+                )}
               </p>
             </div>
           </div>
@@ -155,7 +160,6 @@ const CustomerDetailsPage: React.FC = () => {
               <p className="text-gray-600"><span className="font-medium text-gray-800">Delivery Days:</span> {customer.acceptedDeliveryDays.join(", ") || "N/A"}</p>
               <p className="text-gray-600"><span className="font-medium text-gray-800">Bank Info:</span> {customer.bankACHAccountInfo || "N/A"}</p>
               <p className="text-gray-600"><span className="font-medium text-gray-800">Note :</span> {customer.note || "N/A"}</p>
-             
             </div>
           </div>
         </div>

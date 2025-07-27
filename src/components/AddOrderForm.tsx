@@ -90,8 +90,12 @@ interface OrderPayload {
   products: OrderProduct[];
 }
 
-const AddOrderPage = ({setAddOrderOpen}:{setAddOrderOpen:any}) => {
-  // Updated state to include payment due date
+interface AddOrderPageProps {
+  setAddOrderOpen: (open: boolean) => void;
+  onAddSuccess: () => void; // Add this line
+}
+
+const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSuccess }) => {  
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [orderDate, setOrderDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -235,31 +239,32 @@ const AddOrderPage = ({setAddOrderOpen}:{setAddOrderOpen:any}) => {
     })),
   });
 
-  const handlePlaceOrder = async () => {
-    if (!selectedClient || orderItems.length === 0) {
-      alert("Please select a client and add items");
-      return;
-    }
+const handlePlaceOrder = async () => {
+  if (!selectedClient || orderItems.length === 0) {
+    alert("Please select a client and add items");
+    return;
+  }
 
-    const payload = constructOrderPayload();
-    console.log("Order payload:", payload); // For debugging
+  const payload = constructOrderPayload();
+  console.log("Order payload:", payload); // For debugging
 
-    try {
-      await addOrder(payload).unwrap();
-      // Reset form including payment due date
-      setOrderItems([]);
-      setSearchTerm("");
-      setSelectedClient("");
-      setOrderDate(new Date().toISOString().split("T")[0]);
-      setPaymentDueDate(""); // Reset payment due date
-      alert("Order placed successfully!");
-    } catch (err: any) {
-      console.error("Order creation error:", err);
-      alert(
-        "Order failed: " + (err?.data?.message || err?.error || "Unknown error")
-      );
-    }
-  };
+  try {
+    await addOrder(payload).unwrap();
+    // Reset form including payment due date
+    setOrderItems([]);
+    setSearchTerm("");
+    setSelectedClient("");
+    setOrderDate(new Date().toISOString().split("T")[0]);
+    setPaymentDueDate(""); // Reset payment due date
+    alert("Order placed successfully!");
+    onAddSuccess(); // Add this line to close the modal
+  } catch (err: any) {
+    console.error("Order creation error:", err);
+    alert(
+      "Order failed: " + (err?.data?.message || err?.error || "Unknown error")
+    );
+  }
+};
 
   return (
     <Card className="w-full flex flex-col">
@@ -268,7 +273,7 @@ const AddOrderPage = ({setAddOrderOpen}:{setAddOrderOpen:any}) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <User className="w-4 h-4" /> Select Client
+              <User className="w-4 h-4" /> Select Client <span className="text-red-700">*</span>
             </Label>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger>
@@ -292,7 +297,7 @@ const AddOrderPage = ({setAddOrderOpen}:{setAddOrderOpen:any}) => {
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Order Date
+              <Calendar className="w-4 h-4" /> Order Date <span className="text-red-700">*</span>
             </Label>
             <Input
               type="date"
@@ -303,7 +308,7 @@ const AddOrderPage = ({setAddOrderOpen}:{setAddOrderOpen:any}) => {
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Delivery Date
+              <Calendar className="w-4 h-4" /> Delivery Date <span className="text-red-700">*</span>
             </Label>
             <Input
               type="date"
@@ -315,7 +320,7 @@ const AddOrderPage = ({setAddOrderOpen}:{setAddOrderOpen:any}) => {
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Payment Due Date
+              <Calendar className="w-4 h-4" /> Payment Due Date <span className="text-red-700">*</span>
             </Label>
             <Input
               type="date"

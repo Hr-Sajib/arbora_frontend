@@ -23,6 +23,7 @@ interface UpdateOrderPayload {
   id: string; // MongoDB _id as string
   date?: string;
   invoiceNumber?: string;
+  shippingCharge?: number;
   PONumber?: string;
   storeId?: string;
   paymentDueDate?: string;

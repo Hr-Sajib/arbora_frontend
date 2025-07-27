@@ -32,8 +32,8 @@ export default function AppSidebar() {
   const token = Cookies.get("token");
 
   // Decode token to get email dynamically
-  let email = "admin@gmail.com"; // Default value
-  let username = "Daval"; // Default username
+  let email = ""; // Default value
+  let username = ""; // Default username
   if (token) {
     try {
       const decodedToken = jwtDecode<DecodedToken>(token);
@@ -246,7 +246,7 @@ export default function AppSidebar() {
               onClick={handleLogout}
             >
               <Image
-                src="/dashboardIcons/Picture.png"
+                src="/dashboardIcons/logo.png"
                 width={40}
                 height={40}
                 alt="Profile"

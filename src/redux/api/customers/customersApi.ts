@@ -1,7 +1,3 @@
-
-
-
-
 import { Customer } from "@/types";
 import baseApi from "../baseApi";
 

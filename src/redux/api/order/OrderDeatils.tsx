@@ -14,7 +14,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -36,320 +35,144 @@ import {
   MoreHorizontal,
   DollarSign,
 } from "lucide-react";
-import { useGiteSingleOrderQuery } from "./orderManagementApi";
+import { useGiteSingleOrderQuery, useUpdateOrderMutation } from "./orderManagementApi";
 import { ImFilePdf } from "react-icons/im";
 import Link from "next/link";
 import Loading from "@/components/Loding/Loding";
 
-
-const OrderDeatils = ({ id }: { id: string }) => {
-
-  const [isBestLoading,setIsBestLoading]=useState(false)
-  const { data, isError, isLoading } = useGiteSingleOrderQuery(id);
-  console.log("order deatils data", data);
+const OrderDetails = ({ id }: { id: string }) => {
+  const [isBestLoading, setIsBestLoading] = useState(false);
+  const [isShippingModalOpen, setIsShippingModalOpen] = useState(false);
+  const [shippingChargeInput, setShippingChargeInput] = useState("");
+  const { data, isError, isLoading, refetch } = useGiteSingleOrderQuery(id);
+  console.log("order details data", data);
   const [searchQuery, setSearchQuery] = useState("");
+  const [updateOrder, { isLoading: isUpdating }] = useUpdateOrderMutation();
 
-  const orderData = [
-    {
-      productName: "Tea Masala",
-      itemNumber: "#322552",
-      batchNumber: "-",
-      categoryName: "Tea Masala",
-      quantity: 20,
-      price: 5.3,
-      discount: 5.0,
-      netPrice: 5.3,
-      profit: "5.2.3",
-      scanStatus: "Scanned",
-    },
-    {
-      productName: "Tea Masala",
-      itemNumber: "#322552",
-      batchNumber: "-",
-      categoryName: "Tea Masala",
-      quantity: 20,
-      price: 5.3,
-      discount: 5.0,
-      netPrice: 5.3,
-      profit: "5.2.3",
-      scanStatus: "Scanned",
-    },
-    {
-      productName: "Tea Masala",
-      itemNumber: "#322552",
-      batchNumber: "-",
-      categoryName: "Tea Masala",
-      quantity: 20,
-      price: 5.3,
-      discount: 5.0,
-      netPrice: 5.3,
-      profit: "5.2.3",
-      scanStatus: "Scanned",
-    },
-  ];
-
-// const handleDownloadInvice = async (id: string) => {
-//   try {
-//     const token = Cookies?.get("token");
-//     console.log(token)
-//     if (!token) {
-//       console.error('Authentication token not found. Please log in.');
-//       return; // Stop execution if no token
-//     }
-
-//     // Fetch the PDF as a binary response (arrayBuffer)
-//     const response = await fetch(
-//       `${process.env.NEXT_PUBLIC_URL}/order/orderInvoice/${id}`,
-//       {
-//         headers: {
-//           'Authorization': `${token}`, // Add the Bearer token
-//           'Content-Type': 'application/json', // Good practice, though PDF download might not strictly need it
-//         },
-//       }
-//     );
-
-//     console.log(response)
-//     if (!response.ok) {
-//       throw new Error("Failed to fetch PDF");
-//     }
-
-//     const data = await response.arrayBuffer();
-//     const blob = new Blob([data], { type: "application/pdf" });
-//     const fileURL = URL.createObjectURL(blob);
-
-//     window.open(fileURL, "_blank");
-
-//     setTimeout(() => {
-//       URL.revokeObjectURL(fileURL);
-//     }, 10);
-//   } catch (err) {
-//     console.log(err);
-//   }
-// };
-
-// //----------------------------------------------------------------------------------------------------
-
-// const handleDownloadDilverySlip = async (id: string) => {
-//   try {
-//     const token = Cookies?.get("token");
-//     if (!token) {
-//       console.error('Authentication token not found. Please log in.');
-//       return; // Stop execution if no token
-//     }
-
-//     // Fetch the PDF as a binary response (arrayBuffer)
-//     const response = await fetch(
-//       `${process.env.NEXT_PUBLIC_URL}/order/deliverySheet/${id}`,
-//       {
-//         headers: {
-//           'Authorization': `${token}`, // Add the Bearer token
-//           'Content-Type': 'application/json', // Good practice
-//         },
-//       }
-//     );
-
-//     if (!response.ok) {
-//       throw new Error("Failed to fetch PDF");
-//     }
-
-//     const data = await response.arrayBuffer();
-//     const blob = new Blob([data], { type: "application/pdf" });
-//     const fileURL = URL.createObjectURL(blob);
-
-//     window.open(fileURL, "_blank");
-
-//     setTimeout(() => {
-//       URL.revokeObjectURL(fileURL);
-//     }, 10);
-//   } catch (err) {
-//     console.log(err);
-//   }
-// };
-
-// //----------------------------------------------------------------------------------------------------
-
-// const handleDownloadExcel = async () => {
-//   try {
-//     const token = Cookies?.get("token"); // Get token from localStorage
-//     if (!token) {
-//       console.error('Authentication token not found. Please log in.');
-//       return; // Stop execution if no token
-//     }
-
-//     const response = await fetch(
-//       `${process.env.NEXT_PUBLIC_URL}/order/bulk-order-excel-empty?download=true`,
-//       {
-//         headers: {
-//           'Authorization': `${token}`, // Add the Bearer token
-//           'Content-Type': 'application/json', // Good practice
-//         },
-//       }
-//     );
-
-//     if (!response.ok) {
-//       throw new Error("Failed to fetch Excel file");
-//     }
-
-//     const data = await response.arrayBuffer();
-//     const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-
-//     const link = document.createElement("a");
-//     link.href = URL.createObjectURL(blob);
-//     link.download = `order_repo.xl`;
-
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-
-//     URL.revokeObjectURL(link.href);
-//   } catch (err) {
-//     console.error("Error downloading Excel file:", err);
-//   }
-// };
-
-  const handleDownloadInvice = async (id: string) => {
-    setIsBestLoading(true)
-    
+  const handleDownloadInvoice = async (id: string) => {
+    setIsBestLoading(true);
     try {
-       const token = Cookies?.get("token");
-     
+      const token = Cookies?.get("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/order/orderInvoice/${id}`,{
-         headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `${token}`,
-    
-  },
-      }
-        
+        `${process.env.NEXT_PUBLIC_URL}/order/orderInvoice/${id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
       );
-
 
       if (!response.ok) {
         throw new Error("Failed to fetch PDF");
       }
 
-      // Read the binary data as an ArrayBuffer
       const data = await response.arrayBuffer();
-
-      // Create a Blob from the ArrayBuffer (this represents a PDF)
       const blob = new Blob([data], { type: "application/pdf" });
-
-      // Create a temporary link to trigger the download
       const fileURL = URL.createObjectURL(blob);
-
-  
-    window.open(fileURL, "_blank");
-      // Create a temporary link to trigger the download
-      // const link = document.createElement("a");
-      // link.href = URL.createObjectURL(blob);
-      // link.download = "order_delivery-slip"; 
-
-      // Clean up the URL object
-      // URL.revokeObjectURL(link.href);
-       setTimeout(() => {
-      URL.revokeObjectURL(fileURL);
-    }, 10);
-
-    setIsBestLoading(false)
+      window.open(fileURL, "_blank");
+      setTimeout(() => {
+        URL.revokeObjectURL(fileURL);
+      }, 10);
+      setIsBestLoading(false);
     } catch (err) {
       console.log(err);
-      setIsBestLoading(false)
+      setIsBestLoading(false);
     }
-
-    
   };
-  const handleDownloadDilverySlip = async (id: string) => {
-setIsBestLoading(true)
+
+  const handleDownloadDeliverySlip = async (id: string) => {
+    setIsBestLoading(true);
     try {
-       const token = Cookies?.get("token");
-      // Fetch the PDF as a binary response (arrayBuffer)
+      const token = Cookies?.get("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/order/deliverySheet/${id}`,{
-         headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `${token}`,
-  },
-      }
-        
+        `${process.env.NEXT_PUBLIC_URL}/order/deliverySheet/${id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
       );
 
       if (!response.ok) {
         throw new Error("Failed to fetch PDF");
       }
 
-      // Read the binary data as an ArrayBuffer
       const data = await response.arrayBuffer();
-
-      // Create a Blob from the ArrayBuffer (this represents a PDF)
       const blob = new Blob([data], { type: "application/pdf" });
- const fileURL = URL.createObjectURL(blob);
-
-  
-    window.open(fileURL, "_blank");
-      // Create a temporary link to trigger the download
-      // const link = document.createElement("a");
-      // link.href = URL.createObjectURL(blob);
-      // link.download = "order_delivery-slip"; 
-
-      // Clean up the URL object
-      // URL.revokeObjectURL(link.href);
-       setTimeout(() => {
-      URL.revokeObjectURL(fileURL);
-    }, 10);
-    setIsBestLoading(false)
+      const fileURL = URL.createObjectURL(blob);
+      window.open(fileURL, "_blank");
+      setTimeout(() => {
+        URL.revokeObjectURL(fileURL);
+      }, 10);
+      setIsBestLoading(false);
     } catch (err) {
       console.log(err);
-       setIsBestLoading(false)
+      setIsBestLoading(false);
     }
   };
-  const handleDownloadShipTOAddress = async (id: string) => {
-setIsBestLoading(true)
+
+  const handleDownloadShipToAddress = async (id: string) => {
+    setIsBestLoading(true);
     try {
-       const token = Cookies?.get("token");
-      // Fetch the PDF as a binary response (arrayBuffer)
+      const token = Cookies?.get("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/order/${id}/ship-to-address-pdf`,{
-         headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `${token}`,
-  },
-      }
-        
+        `${process.env.NEXT_PUBLIC_URL}/order/${id}/ship-to-address-pdf`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
       );
 
       if (!response.ok) {
         throw new Error("Failed to fetch PDF");
       }
 
-      // Read the binary data as an ArrayBuffer
       const data = await response.arrayBuffer();
-
-      // Create a Blob from the ArrayBuffer (this represents a PDF)
       const blob = new Blob([data], { type: "application/pdf" });
- const fileURL = URL.createObjectURL(blob);
-
-  
-    window.open(fileURL, "_blank");
-      // Create a temporary link to trigger the download
-      // const link = document.createElement("a");
-      // link.href = URL.createObjectURL(blob);
-      // link.download = "order_delivery-slip"; 
-
-      // Clean up the URL object
-      // URL.revokeObjectURL(link.href);
-       setTimeout(() => {
-      URL.revokeObjectURL(fileURL);
-    }, 10);
-    setIsBestLoading(false)
+      const fileURL = URL.createObjectURL(blob);
+      window.open(fileURL, "_blank");
+      setTimeout(() => {
+        URL.revokeObjectURL(fileURL);
+      }, 10);
+      setIsBestLoading(false);
     } catch (err) {
       console.log(err);
-       setIsBestLoading(false)
+      setIsBestLoading(false);
     }
   };
-  
 
- if (isLoading) {
+  const handleAddShippingCharge = async () => {
+    if (!shippingChargeInput || isNaN(Number(shippingChargeInput)) || Number(shippingChargeInput) < 0) {
+      alert("Please enter a valid shipping charge amount.");
+      return;
+    }
+
+    try {
+      await updateOrder({
+        id,
+        shippingCharge: Number(shippingChargeInput),
+      }).unwrap();
+      alert("Shipping charge updated successfully!");
+      await refetch(); // Refetch order details to update UI
+      setIsShippingModalOpen(false);
+      setShippingChargeInput("");
+    } catch (err: any) {
+      const errorMessage = err?.data?.message || err?.error || "Failed to update shipping charge";
+      alert(`Error: ${errorMessage}`);
+      console.error("Update shipping charge error:", err);
+    }
+  };
+
+  // Filter products based on search query
+  const filteredProducts = data?.data?.products?.filter((item: any) =>
+    item?.productId?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
+
+  if (isLoading) {
     return <div className="p-6 text-center text-gray-700">Loading order details...</div>;
   }
 
@@ -358,21 +181,86 @@ setIsBestLoading(true)
   }
 
   return (
-    <div> 
-
-    {isBestLoading&&  <Loading />}
-      {" "}
+    <div>
+      {isBestLoading && <Loading />}
       <div className="p-6 bg-white">
-        {/* Header */}
+        {/* Header with Order Summary */}
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">
-            View Order
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Details</h1>
+
+          {/* Order Summary Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 rounded-lg">
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Invoice Number</span>
+              <span className="font-medium">{data?.data?.invoiceNumber || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">PO Number</span>
+              <span className="font-medium">{data?.data?.PONumber || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Order Date</span>
+              <span className="font-medium">{data?.data?.date || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Due Date</span>
+              <span className="font-medium">{data?.data?.paymentDueDate || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Shipping Date</span>
+              <span className="font-medium">{data?.data?.shippingDate || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Order Amount</span>
+              <span className="font-medium">${data?.data?.orderAmount?.toFixed(2) || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Shipping Charge</span>
+              <span className="font-medium">${data?.data?.shippingCharge?.toFixed(2) || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Discount Given</span>
+              <span className="font-medium">${data?.data?.discountGiven?.toFixed(2) || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Open Balance</span>
+              <span className="font-medium">${data?.data?.openBalance?.toFixed(2) || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Profit Amount</span>
+              <span className="font-medium">${data?.data?.profitAmount?.toFixed(2) || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Profit Percentage</span>
+              <span className="font-medium">{data?.data?.profitPercentage?.toFixed(2) || "N/A"}%</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Payment Received</span>
+              <span className="font-medium">${data?.data?.paymentAmountReceived?.toFixed(2) || "N/A"}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Order Status</span>
+              <Badge
+                variant={data?.data?.orderStatus === "completed" ? "secondary" : data?.data?.orderStatus === "cancelled" ? "destructive" : "default"}
+                className={data?.data?.orderStatus === "completed" ? "bg-green-100 text-green-800" : ""}
+              >
+                {data?.data?.orderStatus || "N/A"}
+              </Badge>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Payment Status</span>
+              <Badge
+                variant={data?.data?.paymentStatus === "paid" ? "secondary" : data?.data?.paymentStatus === "notPaid" ? "destructive" : "default"}
+                className={data?.data?.paymentStatus === "paid" ? "bg-green-100 text-green-800" : ""}
+              >
+                {data?.data?.paymentStatus || "N/A"}
+              </Badge>
+            </div>
+          </div>
 
           {/* Filter Section */}
-
           <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-            <h2 className="font-medium">{data?.data?.PONumber} </h2>
+            <h2 className="font-medium">{data?.data?.PONumber || "N/A"}</h2>
             <div className="flex items-center gap-2 ml-auto">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -383,42 +271,79 @@ setIsBestLoading(true)
                   className="pl-10 w-64"
                 />
               </div>
-              <Link href={`/dashboard/order-management/${data.data._id}/${data.data.storeId._id}`}>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                <DollarSign className="h-4 w-4" />
+              <Button
+                className="bg-gray-200 text-black border-gray-300 border hover:bg-white"
+                onClick={() => setIsShippingModalOpen(true)}
+              >
+                🚚 Add Shipping Charge
               </Button>
+              <Link href={`/dashboard/order-management/${data.data._id}/${data.data.storeId._id}`}>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <DollarSign className="h-4 w-4" />
+                </Button>
               </Link>
-              
-             
-           
               <DropdownMenu>
-                <DropdownMenuTrigger> <ImFilePdf className="w-5 h-5 text-black" /></DropdownMenuTrigger>
+                <DropdownMenuTrigger>
+                  <ImFilePdf className="w-5 h-5 text-black" />
+                </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadInvice(data.data._id)}
-                  >
+                  <DropdownMenuItem onClick={() => handleDownloadInvoice(data.data._id)}>
                     Invoice
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadDilverySlip(data.data._id)}
-                  >
-                    Delivery slip
+                  <DropdownMenuItem onClick={() => handleDownloadDeliverySlip(data.data._id)}>
+                    Delivery Slip
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleDownloadShipTOAddress(data.data._id)}
-                  >
-                    Ship to address 
+                  <DropdownMenuItem onClick={() => handleDownloadShipToAddress(data.data._id)}>
+                    Ship to Address
                   </DropdownMenuItem>
-                  {/* <DropdownMenuItem
-                    onClick={handleDownloadExcel}
-                  >
-                    Pro
-                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Shipping Charge Modal */}
+          {isShippingModalOpen && (
+            <div className="fixed inset-0 backdrop-blur-xl bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Shipping Charge</h3>
+                <div className="mb-4">
+                  <label htmlFor="shippingCharge" className="block text-sm font-medium text-gray-700 mb-1">
+                    Shipping Charge ($)
+                  </label>
+                  <Input
+                    id="shippingCharge"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={shippingChargeInput}
+                    onChange={(e) => setShippingChargeInput(e.target.value)}
+                    placeholder="Enter shipping charge"
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsShippingModalOpen(false);
+                      setShippingChargeInput("");
+                    }}
+                    disabled={isUpdating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddShippingCharge}
+                    disabled={isUpdating || !shippingChargeInput}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isUpdating ? "Adding..." : "Add"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Data Table */}
@@ -436,44 +361,44 @@ setIsBestLoading(true)
                 <TableHead className="font-semibold">Net Price</TableHead>
                 <TableHead className="font-semibold">Profit</TableHead>
                 <TableHead className="font-semibold">Scan Status</TableHead>
-               
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data?.products?.map((item: any, index: number) => (
+              {filteredProducts.map((item: any, index: number) => (
                 <TableRow key={index} className="hover:bg-gray-50">
                   <TableCell className="font-medium">
                     {item?.productId?.name}
                   </TableCell>
-                  <TableCell   className="text-blue-600 cursor-pointer">
+                  <TableCell className="text-blue-600 cursor-pointer">
                     {item?.productId?.itemNumber}
                   </TableCell>
-                  <TableCell>{item?.productId?.barcodeString}</TableCell>
+                  <TableCell>{item?.productId?.barcodeString || "-"}</TableCell>
                   <TableCell>{item?.productId?.categoryId?.name}</TableCell>
                   <TableCell>{item?.quantity}</TableCell>
                   <TableCell>
-                    {item?.productId?.purchasePrice.toFixed(2)}
+                    ${item?.productId?.purchasePrice?.toFixed(2) || "N/A"}
                   </TableCell>
-                  <TableCell>{item?.discount?.toFixed(2)}</TableCell>
-                  <TableCell>{item?.productId?.salesPrice.toFixed(2)}</TableCell>
-                  <TableCell>{item?.productId?.competitorPrice}</TableCell>
+                  <TableCell>${item?.discount?.toFixed(2) || "0.00"}</TableCell>
+                  <TableCell>
+                    ${item?.productId?.salesPrice?.toFixed(2) || "N/A"}
+                  </TableCell>
+                  <TableCell>${item?.productId?.competitorPrice?.toFixed(2) || "N/A"}</TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
                       className="bg-green-100 text-green-800"
                     >
-                      panding
+                      {item?.scanStatus || "pending"}
                     </Badge>
                   </TableCell>
-                  
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
-      </div>{" "}
+      </div>
     </div>
   );
 };
 
-export default OrderDeatils;
+export default OrderDetails;

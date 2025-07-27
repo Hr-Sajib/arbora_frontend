@@ -143,7 +143,7 @@ const actualCustomers :Prospect[]|undefined =prospectsResponse?.data.filter(cust
           {/* Prospect follow ups for today */}
           <div className="w-full h-48 bg-white shadow-md rounded-2xl mb-3 p-5 overflow-auto">
             <p className="text-lg font-semibold mb-3 text-blue-800">
-              📞 {prospects.length} Prospect follow-ups for today
+              📞 {actualCustomers.length} Prospect follow-ups for today
             </p>
             <table className="min-w-full text-left">
               <thead className="border-b">

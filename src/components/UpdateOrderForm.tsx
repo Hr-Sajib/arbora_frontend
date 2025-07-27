@@ -40,6 +40,7 @@ interface UpdateOrderPayload {
   storeId: string;
   paymentDueDate: string;
   orderAmount: number;
+  shippingCharge?: number;
   products: Array<{
     productId: string;
     quantity: number;
@@ -392,6 +393,7 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
       toast.success("Order updated successfully!");
 
       if (isModal && onUpdateSuccess) {
+        console.log("Modal should close now");
         onUpdateSuccess();
       } else if (!isModal) {
         router.push("/dashboard/order-management");
@@ -484,7 +486,7 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search products by name or SKU..."
+              placeholder="Search products by name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"

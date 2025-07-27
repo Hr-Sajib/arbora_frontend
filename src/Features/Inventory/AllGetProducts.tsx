@@ -535,20 +535,11 @@ const handleApplyFilters = (newFilters:any) => {
                                   id="weightUnit"
                                   value={selectedProduct.weightUnit ?? ""}
                                   onChange={(e) => setSelectedProduct({ ...selectedProduct, weightUnit: e.target.value })}
-                                  placeholder="Unit (e.g., KILOGRAM)"
+                                  placeholder="INCH/CM"
                                   required
                                 />
                               </div>
                             </div>
-                            {/* <div>
-                              <Label className="mb-1" htmlFor="categoryId">Category ID</Label>
-                              <Input
-                                id="categoryId"
-                                value={selectedProduct?.categoryId?.name || ""}
-                             
-                                placeholder="Category ID"
-                              />
-                            </div> */}
 
                               <div>
   <label className="block text-sm font-medium text-gray-700">Category *</label>
@@ -701,18 +692,28 @@ const handleApplyFilters = (newFilters:any) => {
                                 />
                               </div>
                               <div>
-                                <Label className="mb-1" htmlFor="unit">Unit</Label>
-                                <Input
-                                  id="unit"
-                                  value={selectedProduct.packageDimensions?.unit ?? ""}
-                                  onChange={(e) => setSelectedProduct({
-                                    ...selectedProduct,
-                                    packageDimensions: { ...selectedProduct.packageDimensions, unit: e.target.value }
-                                  })}
-                                  placeholder="Unit (e.g., CM)"
-                                  required
-                                />
-                              </div>
+                          <Label className="mb-1" htmlFor="unit">Unit</Label>
+                          <select
+                            id="unit"
+                            value={selectedProduct.packageDimensions?.unit ?? ""}
+                            onChange={(e) =>
+                              setSelectedProduct({
+                                ...selectedProduct,
+                                packageDimensions: {
+                                  ...selectedProduct.packageDimensions,
+                                  unit: e.target.value,
+                                },
+                              })
+                            }
+                            required
+                            className="w-full border rounded-md px-2 h-9  py-1"
+                          >
+                            <option value="" disabled>Select Unit</option>
+                            <option value="CM">CM</option>
+                            <option value="INCH">INCH</option>
+                          </select>
+                        </div>
+
                             </div>
                           </div>
                           <div className="flex justify-end gap-2">

@@ -120,9 +120,9 @@ export default function CustomerTable() {
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.storePhone}</td>
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.storePersonPhone}</td>
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.storePersonEmail}</td>
-                <td className="p-2 whitespace-nowrap text-gray-700">${row.openBalance || "N/A"}</td>
-                <td className="p-2 whitespace-nowrap text-gray-700">{row.totalOrders || "N/A"}</td>
-                <td className="p-2 whitespace-nowrap text-gray-700">${row.totalOrderAmount || "N/A"}</td>
+                <td className="p-2 whitespace-nowrap text-gray-700">{row.openBalance || 0}</td>
+                <td className="p-2 whitespace-nowrap text-gray-700">{row.totalOrders || 0}</td>
+                <td className="p-2 whitespace-nowrap text-gray-700">${row.totalOrderAmount || 0}</td>
                 <td className="p-2 whitespace-nowrap text-gray-700">
                   {row.isCustomerSourceProspect === true ? "Convert" : "Direct"}
                 </td>

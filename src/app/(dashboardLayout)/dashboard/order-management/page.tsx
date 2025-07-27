@@ -22,7 +22,6 @@ import { FilterFormValues } from "@/types";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { ImFilePdf } from "react-icons/im";
-import { FaFileExcel } from "react-icons/fa6";
 import Loading from "@/components/Loding/Loding";
 
 interface Order {
@@ -48,7 +47,6 @@ interface Order {
     shippingState: string;
     shippingZipcode: string;
     shippingCity: string;
-    shippingCharge?: string;
     creditApplication: string;
     ownerLegalFrontImage: string;
     ownerLegalBackImage: string;
@@ -58,6 +56,7 @@ interface Order {
     updatedAt: string;
     __v: number;
   };
+  shippingCharge?: string;
   paymentDueDate: string;
   orderAmount: number;
   orderStatus: string;
@@ -92,31 +91,31 @@ interface Order {
 
 export default function OrderManagement(): React.ReactElement {
   const {
-  data: { data: orders = [] } = {},
-  isLoading,
-  isFetching,
-  isError,
-  error,
-} = useGetOrdersQuery(undefined)
+    data: { data: orders = [] } = {},
+    isLoading,
+    isFetching,
+    isError,
+    error,
+  } = useGetOrdersQuery(undefined);
   console.log("check", orders);
-const [isBestLoading,setIsBestLoading]=useState(false)
+  const [isBestLoading, setIsBestLoading] = useState(false);
   const handleDownload = async () => {
-
-    setIsBestLoading(true)
+    setIsBestLoading(true);
     const token = Cookies?.get("token");
-    console.log(token)
+    console.log(token);
     if (!token) {
-      console.error('Authentication token not found. Please log in.');
+      console.error("Authentication token not found. Please log in.");
       return; // Stop execution if no token
     }
     try {
       // Fetch the PDF as a binary response (arrayBuffer)
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/order/allOrdersPdf`,{
-           headers: {
-          'Authorization': `${token}`, // Add the Bearer token
-          'Content-Type': 'application/json', // Good practice, though PDF download might not strictly need it
-        },
+        `${process.env.NEXT_PUBLIC_URL}/order/allOrdersPdf`,
+        {
+          headers: {
+            Authorization: `${token}`, // Add the Bearer token
+            "Content-Type": "application/json", // Good practice, though PDF download might not strictly need it
+          },
         }
       );
 
@@ -143,24 +142,21 @@ const [isBestLoading,setIsBestLoading]=useState(false)
         URL.revokeObjectURL(fileURL);
       }, 10);
 
-      setIsBestLoading(false)
+      setIsBestLoading(false);
     } catch (err) {
       console.log(err);
-       setIsBestLoading(false)
+      setIsBestLoading(false);
     }
   };
 
-  // function handleAddOrderCancel() {
-  //   setAddOrderOpen(false);
-  // }
-
   // States
-    const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
   const [addOrderOpen, setAddOrderOpen] = useState(false);
   const [updateOrderOpen, setUpdateOrderOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Filter and Search states
   const [searchTerm, setSearchTerm] = useState("");
@@ -301,11 +297,11 @@ const [isBestLoading,setIsBestLoading]=useState(false)
   // Calculate filtered statistics for cards
   const filteredStats = useMemo(() => {
     const totalOrderAmount = filteredOrders.reduce(
-      (sum:Number, order:any) => sum + order.orderAmount,
+      (sum: Number, order: any) => sum + order.orderAmount,
       0
     );
     const totalOpenAmount = filteredOrders.reduce(
-      (sum:any, order:any) => sum + Math.max(0, order.openBalance),
+      (sum: any, order: any) => sum + Math.max(0, order.openBalance),
       0
     );
     const totalOrders = filteredOrders.length;
@@ -410,103 +406,95 @@ const [isBestLoading,setIsBestLoading]=useState(false)
   }
 
   const handleDownloadExcel = async () => {
-setIsBestLoading(true)
-  try {
-    const token = Cookies?.get("token");
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_URL}/order/bulk-order-excel-empty?download=true`,{
-         headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `${token}`,
-  },
+    setIsBestLoading(true);
+    try {
+      const token = Cookies?.get("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/order/bulk-order-excel-empty?download=true`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch Excel file");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch Excel file");
+      const data = await response.arrayBuffer();
+
+      const blob = new Blob([data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+
+      link.download = `order_repo.xlsx`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(link.href);
+      setIsBestLoading(false);
+    } catch (err) {
+      console.error("Error downloading Excel file:", err);
+      setIsBestLoading(false);
     }
-
- 
-    const data = await response.arrayBuffer();
-
-   
-    const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }); 
-
-    
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    
-    
-    link.download = `order_repo.xlsx`; 
-  
-   
-    document.body.appendChild(link);
-    
-   
-    link.click(); 
-    
-   
-    document.body.removeChild(link); 
-
-    
-    URL.revokeObjectURL(link.href);
-    setIsBestLoading(false)
-  } catch (err) {
-    console.error("Error downloading Excel file:", err);
-   setIsBestLoading(false)
-  }
-};
+  };
 
   return (
     <div>
       {/* Section 1: Orders Overview */}
-
-      { isVisible&&  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {cardData.map((card, idx) => (
-          <div
-            style={{ backgroundColor: card.bg }}
-            key={idx}
-            className="text-white p-4 rounded-lg"
-          >
-            <h3 className="text-base md:text-lg">{card.title}</h3>
-            <p className="text-3xl md:text-4xl font-bold my-2.5">
-              {typeof card.value === "number" && card.currency
-                ? `$${card.value.toLocaleString()}`
-                : card.value.toLocaleString()}
-            </p>
-            <p className="text-sm flex items-center gap-2">
-              {filteredOrders.length !== orders?.length && (
-                <span className="text-yellow-300">Filtered • </span>
-              )}
-              till {card.date}{" "}
-              <span className="text-green-400 flex items-center gap-2">
-                <svg
-                  width="19"
-                  height="18"
-                  viewBox="0 0 19 18"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1.92334 0C2.47562 0 2.92334 0.447715 2.92334 1V16H17.9233C18.4756 16 18.9233 16.4477 18.9233 17C18.9233 17.5523 18.4756 18 17.9233 18H1.92334C1.37106 18 0.92334 17.5523 0.92334 17V1C0.92334 0.447715 1.37106 0 1.92334 0Z"
-                    fill="#21C45D"
-                  />
-                  <path
-                    d="M17.7554 5.55468C18.0617 5.09516 17.9376 4.47429 17.478 4.16793C17.0185 3.86158 16.3976 3.98576 16.0913 4.44528L12.6776 9.56573L9.52332 7.19998C9.06406 6.85553 8.40972 6.96762 8.09127 7.44528L4.09127 13.4453C3.78492 13.9048 3.9091 14.5257 4.36862 14.832C4.82815 15.1384 5.44902 15.0142 5.75537 14.5547L9.169 9.43424L12.3233 11.8C12.7826 12.1444 13.4369 12.0324 13.7554 11.5547L17.7554 5.55468Z"
-                    fill="#21C45D"
-                  />
-                </svg>
-                {card.growth}%
-              </span>
-            </p>
-          </div>
-        ))}
-      </div>
-
-      }
-    {
-      isBestLoading&&<Loading/>
-    }
+      {isVisible && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {cardData.map((card, idx) => (
+            <div
+              style={{ backgroundColor: card.bg }}
+              key={idx}
+              className="text-white p-4 rounded-lg"
+            >
+              <h3 className="text-base md:text-lg">{card.title}</h3>
+              <p className="text-3xl md:text-4xl font-bold my-2.5">
+                {typeof card.value === "number" && card.currency
+                  ? `$${card.value.toLocaleString()}`
+                  : card.value.toLocaleString()}
+              </p>
+              <p className="text-sm flex items-center gap-2">
+                {filteredOrders.length !== orders?.length && (
+                  <span className="text-yellow-300">Filtered • </span>
+                )}
+                till {card.date}{" "}
+                <span className="text-green-400 flex items-center gap-2">
+                  <svg
+                    width="19"
+                    height="18"
+                    viewBox="0 0 19 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M1.92334 0C2.47562 0 2.92334 0.447715 2.92334 1V16H17.9233C18.4756 16 18.9233 16.4477 18.9233 17C18.9233 17.5523 18.4756 18 17.9233 18H1.92334C1.37106 18 0.92334 17.5523 0.92334 17V1C0.92334 0.447715 1.37106 0 1.92334 0Z"
+                      fill="#21C45D"
+                    />
+                    <path
+                      d="M17.7554 5.55468C18.0617 5.09516 17.9376 4.47429 17.478 4.16793C17.0185 3.86158 16.3976 3.98576 16.0913 4.44528L12.6776 9.56573L9.52332 7.19998C9.06406 6.85553 8.40972 6.96762 8.09127 7.44528L4.09127 13.4453C3.78492 13.9048 3.9091 14.5257 4.36862 14.832C4.82815 15.1384 5.44902 15.0142 5.75537 14.5547L9.169 9.43424L12.3233 11.8C12.7826 12.1444 13.4369 12.0324 13.7554 11.5547L17.7554 5.55468Z"
+                      fill="#21C45D"
+                    />
+                  </svg>
+                  {card.growth}%
+                </span>
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+      {isBestLoading && <Loading />}
       {/* Active Filters Display */}
       {showActiveFilters && activeFilters && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -522,27 +510,23 @@ setIsBestLoading(true)
                     {new Date(activeFilters.startDate).toLocaleDateString()}
                   </span>
                 )}
-
                 {activeFilters.endDate && (
                   <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                     To: {new Date(activeFilters.endDate).toLocaleDateString()}
                   </span>
                 )}
-
                 {Array.isArray(activeFilters.orderStatus) &&
                   activeFilters.orderStatus.length > 0 && (
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                       Status: {activeFilters.orderStatus.join(", ")}
                     </span>
                   )}
-
                 {Array.isArray(activeFilters.paymentStatus) &&
                   activeFilters.paymentStatus.length > 0 && (
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                       Payment: {activeFilters.paymentStatus.join(", ")}
                     </span>
                   )}
-
                 {(typeof activeFilters.minOrderAmount === "number" ||
                   typeof activeFilters.maxOrderAmount === "number") && (
                   <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
@@ -593,7 +577,12 @@ setIsBestLoading(true)
           )}
         </div>
         <div className="flex items-center space-x-2">
-          <Button onClick={()=>setIsVisible(!isVisible)} className="bg-[#21C45D]">Hide Boards</Button>
+          <Button
+            onClick={() => setIsVisible(!isVisible)}
+            className="bg-[#21C45D]"
+          >
+            Hide Boards
+          </Button>
           <ReusableModal
             open={filterOpen}
             onOpenChange={setFilterOpen}
@@ -624,28 +613,17 @@ setIsBestLoading(true)
           <ReusableModal
             open={addOrderOpen}
             onOpenChange={setAddOrderOpen}
-           
             trigger={<Button className="bg-[#EF4343]">+ Add Order</Button>}
             title="Add New Order"
           >
-            <AddOrderPage  setAddOrderOpen={setAddOrderOpen} />
+            <AddOrderPage
+              setAddOrderOpen={setAddOrderOpen}
+              onAddSuccess={() => setAddOrderOpen(false)}
+            />
           </ReusableModal>
-          {/* <DropdownMenu>
-  <DropdownMenuTrigger>  <ImFilePdf className="w-5 h-5 text-black" /></DropdownMenuTrigger>
-  <DropdownMenuContent>
-    <DropdownMenuSeparator/>
-    <DropdownMenuItem>Invoice</DropdownMenuItem>
-    <DropdownMenuItem>delivery slip</DropdownMenuItem>
-
-  </DropdownMenuContent>
-</DropdownMenu> */}
-
           <Button onClick={handleDownload} className="bg-[#D9D9D9]" size="icon">
             <ImFilePdf className="w-5 h-5 text-black" />
           </Button>
-          {/* <Button onClick={handleDownloadExcel} className="bg-[#D9D9D9]" size="icon">
-            <FaFileExcel className="w-5 h-5 text-black" />
-          </Button> */}
         </div>
       </div>
       {/* Results Summary */}
@@ -672,8 +650,8 @@ setIsBestLoading(true)
               <TableHead className="min-w-[120px]">Open Balance</TableHead>
               <TableHead className="min-w-[100px]">Profit Margin</TableHead>
               <TableHead className="min-w-[100px]">Profit Markup</TableHead>
+              <TableHead className="min-w-[130px]">Shapping Charge</TableHead>
               <TableHead className="min-w-[130px]">Payment Status</TableHead>
-              
               <TableHead className="min-w-[150px] sticky right-0 bg-gray-50">
                 Action
               </TableHead>
@@ -701,13 +679,10 @@ setIsBestLoading(true)
                       year: "numeric",
                     })}
                   </TableCell>
-                  
-                  <TableCell   className="text-sm cursor-pointer text-blue-600 font-medium hover:underline">
-                <Link href={`/dashboard/order-management/${order._id}`}>
-                 {order.PONumber}
-                   
-                </Link>
-                  
+                  <TableCell className="text-sm cursor-pointer text-blue-600 font-medium hover:underline">
+                    <Link href={`/dashboard/order-management/${order._id}`}>
+                      {order.PONumber}
+                    </Link>
                   </TableCell>
                   <TableCell className="text-sm font-medium">
                     {order.storeId?.storeName || "N/A"}
@@ -756,6 +731,11 @@ setIsBestLoading(true)
                     {order.profitPercentage.toFixed(2)}%
                   </TableCell>
                   <TableCell className="text-sm">
+                    <span className="px-2 py-1 rounded-full text-xs capitalize font-medium">
+                      {order.shippingCharge}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">
                     <span
                       className={`px-2 py-1 rounded-full text-xs capitalize font-medium ${
                         order.paymentStatus === "paid"
@@ -766,12 +746,35 @@ setIsBestLoading(true)
                       {order.paymentStatus}
                     </span>
                   </TableCell>
-                 
                   <TableCell className="text-sm sticky right-0 bg-white">
                     <div className="flex items-center space-x-2">
                       {/* View Button */}
-                     <Link href={`/dashboard/order-management/${order._id}`}>
-                       <button className="cursor-pointer hover:bg-gray-100 p-2 rounded-full transition-colors">
+                      <Link href={`/dashboard/order-management/${order._id}`}>
+                        <button className="cursor-pointer hover:bg-gray-100 p-2 rounded-full transition-colors">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 20 21"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              clipRule="evenodd"
+                              d="M10.0002 4.66669C15.1085 4.66669 17.5258 8.09166 18.3768 9.69284C18.6477 10.2027 18.6477 10.7974 18.3768 11.3072C17.5258 12.9084 15.1085 16.3334 10.0002 16.3334C4.89188 16.3334 2.4746 12.9084 1.62363 11.3072C1.35267 10.7974 1.35267 10.2027 1.62363 9.69284C2.4746 8.09166 4.89188 4.66669 10.0002 4.66669Z"
+                              fill="#667085"
+                            />
+                          </svg>
+                        </button>
+                      </Link>
+                      {/* Update Button */}
+                      <button
+                        className="cursor-pointer hover:bg-gray-100 p-2 rounded-full transition-colors"
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setUpdateOrderOpen(true);
+                        }}
+                      >
                         <svg
                           width="16"
                           height="16"
@@ -782,41 +785,11 @@ setIsBestLoading(true)
                           <path
                             fillRule="evenodd"
                             clipRule="evenodd"
-                            d="M10.0002 4.66669C15.1085 4.66669 17.5258 8.09166 18.3768 9.69284C18.6477 10.2027 18.6477 10.7974 18.3768 11.3072C17.5258 12.9084 15.1085 16.3334 10.0002 16.3334C4.89188 16.3334 2.4746 12.9084 1.62363 11.3072C1.35267 10.7974 1.35267 10.2027 1.62363 9.69284C2.4746 8.09166 4.89188 4.66669 10.0002 4.66669Z"
+                            d="M17.3047 7.3201C18.281 6.34379 18.281 4.76087 17.3047 3.78456L16.7155 3.19531C15.7391 2.219 14.1562 2.219 13.1799 3.19531L3.69097 12.6843C3.34624 13.029 3.10982 13.467 3.01082 13.9444L2.34111 17.1737C2.21932 17.7609 2.73906 18.2807 3.32629 18.1589L6.55565 17.4892C7.03302 17.3902 7.47103 17.1538 7.81577 16.809L17.3047 7.3201Z"
                             fill="#667085"
                           />
                         </svg>
                       </button>
-                     </Link>
-                    
-
-                      {/* Update Button */}
-                      <ReusableModal
-                        open={updateOrderOpen}
-                        onOpenChange={setUpdateOrderOpen}
-                        trigger={
-                          <button className="cursor-pointer hover:bg-gray-100 p-2 rounded-full transition-colors">
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 20 21"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M17.3047 7.3201C18.281 6.34379 18.281 4.76087 17.3047 3.78456L16.7155 3.19531C15.7391 2.219 14.1562 2.219 13.1799 3.19531L3.69097 12.6843C3.34624 13.029 3.10982 13.467 3.01082 13.9444L2.34111 17.1737C2.21932 17.7609 2.73906 18.2807 3.32629 18.1589L6.55565 17.4892C7.03302 17.3902 7.47103 17.1538 7.81577 16.809L17.3047 7.3201Z"
-                                fill="#667085"
-                              />
-                            </svg>
-                          </button>
-                        }
-                        title="Update Order"
-                      >
-                        <UpdateOrderPage key={idx} order={order} />
-                      </ReusableModal>
-
                       {/* Delete Button */}
                       <ReusableModal
                         open={deleteConfirmOpen}
@@ -865,7 +838,6 @@ setIsBestLoading(true)
                               </svg>
                             </div>
                           </div>
-
                           <div className="text-center mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
                               Delete Order
@@ -890,7 +862,6 @@ setIsBestLoading(true)
                               This action cannot be undone.
                             </p>
                           </div>
-
                           <div className="flex gap-3 justify-center">
                             <Button
                               variant="outline"
@@ -918,7 +889,6 @@ setIsBestLoading(true)
           </TableBody>
         </Table>
       </div>
-
       {/* Pagination or Load More */}
       <div className="flex items-center justify-between mt-4">
         <div className="text-sm text-gray-500">
@@ -937,6 +907,27 @@ setIsBestLoading(true)
           </Button>
         </div>
       </div>
+      {/* Update Order Modal */}
+      {selectedOrder && (
+        <ReusableModal
+          open={updateOrderOpen}
+          onOpenChange={setUpdateOrderOpen}
+          title="Update Order"
+          trigger={<span style={{ display: "none" }} />}
+        >
+          <UpdateOrderPage
+            order={selectedOrder}
+            onUpdateSuccess={() => {
+              setUpdateOrderOpen(false);
+              setSelectedOrder(null);
+            }}
+            onCancel={() => {
+              setUpdateOrderOpen(false);
+              setSelectedOrder(null);
+            }}
+          />
+        </ReusableModal>
+      )}
     </div>
   );
 }

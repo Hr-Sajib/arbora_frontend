@@ -42,7 +42,7 @@ const BestSellingProducts: React.FC = () => {
   };
 
   return (
-    <div className="px-4 py-3 bg-white rounded-lg shadow-md ">
+    <div className="px-4 py-3 bg-white rounded-lg shadow-md h-82">
       <div className="flex justify-between items-center mb-4">
         <select
           value={selectedOption}

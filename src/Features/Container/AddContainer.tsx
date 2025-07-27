@@ -269,7 +269,7 @@ const AddContainerPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Item Number</label>
+              <label className="block text-sm font-medium mb-1">Product Name</label>
               <select
                 name="itemNumber"
                 value={newProduct.itemNumber}
