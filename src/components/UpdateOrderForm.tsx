@@ -46,6 +46,7 @@ interface UpdateOrderPayload {
     quantity: number;
     discount: number;
   }>;
+  orderStatus: "verified" | "completed" | "cancelled"; // Added orderStatus
 }
 
 interface Product {
@@ -126,7 +127,7 @@ interface Order {
   };
   paymentDueDate: string;
   orderAmount: number;
-  orderStatus: string;
+  orderStatus: string; // Existing orderStatus from API
   paymentAmountReceived: number;
   discountGiven: number;
   openBalance: number;
@@ -188,6 +189,9 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isOrderInitialized, setIsOrderInitialized] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<
+    "verified" | "completed" | "cancelled"
+  >(order?.orderStatus as "verified" | "completed" | "cancelled" || "verified"); // Default to "verified" if not set
   const router = useRouter();
 
   // API hooks
@@ -214,7 +218,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
 
       const initialOrderItems = order.products
         .map((orderProduct) => {
-          // Handle the nested productId object structure from your API response
           const productData = orderProduct.productId;
 
           if (productData && productData._id) {
@@ -374,6 +377,7 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
       quantity: Math.round(item.quantity),
       discount: Math.round(item.discount),
     })),
+    orderStatus, // Added orderStatus to payload
   });
 
   // Handle order update
@@ -478,6 +482,30 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
               value={paymentDueDate}
               onChange={(e) => setPaymentDueDate(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" /> Order Status
+            </Label>
+            <Select
+              value={orderStatus}
+              onValueChange={(value) =>
+                setOrderStatus(value as "verified" | "completed" | "cancelled")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="verified">Verified</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground">
+              Current: {order?.orderStatus || "N/A"}
+            </div>
           </div>
         </div>
 

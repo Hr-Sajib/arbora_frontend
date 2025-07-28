@@ -1,4 +1,3 @@
-
 "use client";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,8 +23,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   CalendarIcon,
   Upload,
-  Download,
-  FileSpreadsheet,
   ArrowUpDown,
 } from "lucide-react";
 import {
@@ -60,12 +57,13 @@ export default function Payment({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [image, setImage] = useState("");
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]); // Track selected order IDs
 
-  const { data: paymentData, isLoading: isPaymentLoading, isError: isPaymentError, refetch } =
+  const { data: paymentData, isLoading: isPaymentLoading, isError: isPaymentError, refetch: refetchPayment } =
     useGetPaymentHistoryQuery(paymentId);
-  const { data: customerData, isLoading: isCustomerLoading, isError: isCustomerError } =
+  const { data: customerData, isLoading: isCustomerLoading, isError: isCustomerError, refetch: refetchCustomer } =
     useGetCustomerQuery(paymentId);
-  const [addPayment] = useInsertPaymentMutation();
+  const [addPayment, { isLoading }] = useInsertPaymentMutation(); // Destructure isLoading from mutation
 
   const handleFileChange = async (event: any) => {
     const file = event.target.files[0];
@@ -88,23 +86,32 @@ export default function Payment({
       return;
     }
 
-    const paymentData = {
+    if (selectedOrderIds.length === 0) {
+      toast.error("Please select at least one order to apply the payment.");
+      return;
+    }
+
+    // Process payment for the first selected order (or handle multiple if needed)
+    const selectedOrderId = selectedOrderIds[0]; // Assuming single selection for now
+    const paymentDataToSend = {
       storeId: paymentId,
-      forOrderId: productId,
+      forOrderId: selectedOrderId, // Use the selected order's ID
       amount: data.amountReceived || 0,
       checkNumber: data.checkNumber || "noCheck",
       date: data.paymentDate,
       method: data.paymentMethod,
       checkImage: image || "noCheck",
     };
-    console.log(paymentData);
+    console.log(paymentDataToSend);
 
     try {
-      const payment = await addPayment(paymentData);
+      const payment = await addPayment(paymentDataToSend);
       console.log(payment);
       if (payment.data.success) {
-        refetch();
+        refetchPayment(); // Refetch payment history
+        refetchCustomer(); // Refetch customer data to update orders
         toast.success("Successfully payment done");
+        setSelectedOrderIds([]); // Clear selection after successful payment
       }
     } catch (error) {
       console.log(error);
@@ -119,6 +126,15 @@ export default function Payment({
   const ordersWithOpenBalance = customerData?.data?.customerOrders?.filter(
     (order: any) => order.openBalance > 0
   ) || [];
+
+  // Handle checkbox change
+  const handleCheckboxChange = (orderId: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [orderId] // Single selection for now; use [...prev, orderId] for multiple
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -278,8 +294,9 @@ export default function Payment({
                   <Button
                     type="submit"
                     className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-10"
+                    disabled={isLoading} // Disable button during loading
                   >
-                    Save
+                    {isLoading ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </div>
@@ -287,8 +304,7 @@ export default function Payment({
           </Card>
         </form>
 
-
- {/* Orders with Open Balance Table */}
+        {/* Orders with Open Balance Table */}
         <h1 className="font-semibold mt-8 text-red-800 flex items-center gap-1"><span className="text-xl">▶</span> Customer Orders with Open Balance</h1>
         <Card className="pl-5">
           <CardContent className="p-0">
@@ -302,7 +318,8 @@ export default function Payment({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">Order</TableHead>
+                    <TableHead className="w-12"></TableHead> {/* Checkbox column */}
+                    <TableHead className="font-medium">Order</TableHead>
                     <TableHead className="font-medium">
                       <div className="flex items-center gap-1">Invoice No.</div>
                     </TableHead>
@@ -320,6 +337,12 @@ export default function Payment({
                 <TableBody>
                   {ordersWithOpenBalance.map((order: any, index: number) => (
                     <TableRow key={index}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedOrderIds.includes(order._id)}
+                          onCheckedChange={() => handleCheckboxChange(order._id)}
+                        />
+                      </TableCell>
                       <Link href={`/dashboard/order-management/${order._id}`}>
                         <TableCell>{order.PONumber}</TableCell>
                       </Link>
@@ -377,8 +400,6 @@ export default function Payment({
             </Table>
           </CardContent>
         </Card>
-
-       
       </div>
     </div>
   );

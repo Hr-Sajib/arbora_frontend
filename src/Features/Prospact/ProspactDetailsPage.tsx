@@ -290,22 +290,19 @@ export default function ProspectDetails() {
                     </button>
                   </td>
                   <td className="p-3 flex space-x-6 items-center">
-                    {isRole === "admin" && (
-                      <button
-                        className="bg-blue-500 text-white px-2 py-1 ml-1 rounded-lg hover:bg-blue-600 transition duration-200"
-                        onClick={() => openUpdateModal(prospect)}
-                        disabled={isUpdating}
-                      >
-                        Assign Salesperson
-                      </button>
-                    )}
-                    <Link href={`/dashboard/update-prospact/${prospect._id}`} className="flex items-center gap-2 w-full">
                     <button
-                      className="text-black border px-2 py-1 rounded-lg cursor-pointer transition duration-200"
-                      // onClick={() => handleUpdateRedirect(prospect._id)}
+                      className="bg-blue-500 text-white px-2 py-1 ml-1 rounded-lg hover:bg-blue-600 transition duration-200"
+                      onClick={() => openUpdateModal(prospect)}
+                      disabled={isUpdating}
                     >
-                      ✎
+                      Assign Salesperson
                     </button>
+                    <Link href={`/dashboard/update-prospact/${prospect._id}`} className="flex items-center gap-2 w-full">
+                      <button
+                        className="text-black border px-2 py-1 rounded-lg cursor-pointer transition duration-200"
+                      >
+                        ✎
+                      </button>
                     </Link>
                     <button
                       className="border text-white px-2 py-1 rounded-lg cursor-pointer transition duration-200"
@@ -342,7 +339,7 @@ export default function ProspectDetails() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
               <h3 className="text-xl font-bold mb-4">Update Salesperson</h3>
-              <div className="space-y-4 flex items-center" >
+              <div className="space-y-4 flex items-center">
                 <div className="flex space-x-4">
                   <label htmlFor="newSalesperson" className="block text-sm font-medium text-gray-700">
                     New Salesperson:

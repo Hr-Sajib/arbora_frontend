@@ -1,3 +1,4 @@
+
 "use client";
 import AddOrderPage from "@/components/AddOrderForm";
 import { OrderFilterForm } from "@/components/OrderFilterForm";
@@ -20,7 +21,7 @@ import {
 } from "@/redux/api/order/orderManagementApi";
 import { FilterFormValues } from "@/types";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ImFilePdf } from "react-icons/im";
 import Loading from "@/components/Loding/Loding";
 
@@ -89,6 +90,8 @@ interface Order {
   __v: number;
 }
 
+import { useSearchParams } from "next/navigation";
+
 export default function OrderManagement(): React.ReactElement {
   const {
     data: { data: orders = [] } = {},
@@ -97,8 +100,26 @@ export default function OrderManagement(): React.ReactElement {
     isError,
     error,
   } = useGetOrdersQuery(undefined);
-  console.log("check", orders);
+
+
+
   const [isBestLoading, setIsBestLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
+  const action = searchParams.get("action");
+
+  // Add effect to handle automatic modal opening
+  useEffect(() => {
+    if (action === "update" && orderId && orders.length > 0) {
+      const order = orders.find((o: Order) => o._id === orderId);
+      if (order) {
+        setSelectedOrder(order);
+        setUpdateOrderOpen(true);
+      }
+    }
+  }, [action, orderId, orders]);
+
+
   const handleDownload = async () => {
     setIsBestLoading(true);
     const token = Cookies?.get("token");
@@ -640,6 +661,7 @@ export default function OrderManagement(): React.ReactElement {
           <TableHeader className="sticky top-0 bg-gray-50 z-10">
             <TableRow>
               <TableHead className="min-w-[120px]">Order Date</TableHead>
+              <TableHead className="min-w-[120px]">Invoice</TableHead>
               <TableHead className="min-w-[120px]">PO No.</TableHead>
               <TableHead className="min-w-[150px]">Store Name</TableHead>
               <TableHead className="min-w-[120px]">Payment Due</TableHead>
@@ -648,8 +670,8 @@ export default function OrderManagement(): React.ReactElement {
               <TableHead className="min-w-[140px]">Payment Received</TableHead>
               <TableHead className="min-w-[100px]">Discount</TableHead>
               <TableHead className="min-w-[120px]">Open Balance</TableHead>
-              <TableHead className="min-w-[100px]">Profit Margin</TableHead>
-              <TableHead className="min-w-[100px]">Profit Markup</TableHead>
+              <TableHead className="min-w-[100px]">Profit</TableHead>
+              <TableHead className="min-w-[100px]">Profit %</TableHead>
               <TableHead className="min-w-[130px]">Shapping Charge</TableHead>
               <TableHead className="min-w-[130px]">Payment Status</TableHead>
               <TableHead className="min-w-[150px] sticky right-0 bg-gray-50">
@@ -678,6 +700,9 @@ export default function OrderManagement(): React.ReactElement {
                       month: "2-digit",
                       year: "numeric",
                     })}
+                  </TableCell>
+                   <TableCell className="text-sm font-medium">
+                    {order.invoiceNumber || "N/A"}
                   </TableCell>
                   <TableCell className="text-sm cursor-pointer text-blue-600 font-medium hover:underline">
                     <Link href={`/dashboard/order-management/${order._id}`}>
@@ -732,7 +757,7 @@ export default function OrderManagement(): React.ReactElement {
                   </TableCell>
                   <TableCell className="text-sm">
                     <span className="px-2 py-1 rounded-full text-xs capitalize font-medium">
-                      {order.shippingCharge}
+                      ${order.shippingCharge}
                     </span>
                   </TableCell>
                   <TableCell className="text-sm">

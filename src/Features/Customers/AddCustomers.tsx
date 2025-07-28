@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -115,20 +113,19 @@ export default function AddCustomer(): React.ReactElement {
     "shippingCity",
     "shippingState",
     "shippingZipcode",
-    
- 
-    
-    
   ];
 
   // Handle input changes
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
     // Clear error for this field when user starts typing
     setFieldErrors((prev) => {
@@ -136,11 +133,13 @@ export default function AddCustomer(): React.ReactElement {
       delete newErrors[name];
       return newErrors;
     });
-    console.log("name nad vale", name, value)
+    console.log("name nad vale", name, value);
   };
 
   // Handle same as billing address checkbox
-  const handleSameAsBillingAddress = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSameAsBillingAddress = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const isChecked = e.target.checked;
     setFormData((prev) => ({
       ...prev,
@@ -185,7 +184,6 @@ export default function AddCustomer(): React.ReactElement {
     }
   };
 
-  
   // Toggle dropdown visibility
   const toggleDropdown = () => {
     setIsDropdownOpen((prev) => !prev);
@@ -194,7 +192,10 @@ export default function AddCustomer(): React.ReactElement {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -203,13 +204,19 @@ export default function AddCustomer(): React.ReactElement {
   }, []);
 
   // Handle file uploads to ImgBB
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: string
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const formDataUpload = new FormData();
     formDataUpload.append("image", file);
-    formDataUpload.append("key", process.env.NEXT_PUBLIC_IMGBB_API_KEY || "YOUR_IMGBB_API_KEY");
+    formDataUpload.append(
+      "key",
+      process.env.NEXT_PUBLIC_IMGBB_API_KEY || "YOUR_IMGBB_API_KEY"
+    );
 
     try {
       const response = await fetch("https://api.imgbb.com/1/upload", {
@@ -248,9 +255,15 @@ export default function AddCustomer(): React.ReactElement {
     requiredFields.forEach((field) => {
       if (!formData[field]) {
         newErrors[field] = "This field is required.";
-      } else if (field === "acceptDeliveryDays" && formData[field].length === 0) {
+      } else if (
+        field === "acceptDeliveryDays" &&
+        formData[field].length === 0
+      ) {
         newErrors[field] = "At least one delivery day is required.";
-      } else if (field === "termDays" && (parseInt(formData[field]) <= 0 || !formData[field])) {
+      } else if (
+        field === "termDays" &&
+        (parseInt(formData[field]) <= 0 || !formData[field])
+      ) {
         newErrors[field] = "Valid term days are required.";
       }
     });
@@ -276,7 +289,7 @@ export default function AddCustomer(): React.ReactElement {
         shippingCity: formData.shippingCity,
         shippingState: formData.shippingState,
         shippingZipcode: formData.shippingZipcode,
-        salesTaxId: formData.salesTaxId ||"Not provided",
+        salesTaxId: formData.salesTaxId || "Not provided",
         acceptedDeliveryDays: formData.acceptDeliveryDays,
         bankACHAccountInfo: formData.bankAchInfo,
         creditApplication: formData.creditApplication || undefined,
@@ -288,7 +301,7 @@ export default function AddCustomer(): React.ReactElement {
         note: formData.note || undefined,
         miscellaneous: formData.miscellaneous || undefined,
       };
-console.log("alll data check",payload)
+      console.log("alll data check", payload);
       await addCustomer(payload).unwrap();
       console.log("added customer", payload);
       toast.success("Customer Added successfully");
@@ -296,10 +309,13 @@ console.log("alll data check",payload)
     } catch (err: any) {
       console.error("Failed to add customer:", err);
       if (err?.data?.errorSources) {
-        const errors = err.data.errorSources.reduce((acc: FieldErrors, source: any) => {
-          acc[source.path] = source.message;
-          return acc;
-        }, {});
+        const errors = err.data.errorSources.reduce(
+          (acc: FieldErrors, source: any) => {
+            acc[source.path] = source.message;
+            return acc;
+          },
+          {}
+        );
         setFieldErrors(errors);
       } else {
         toast.error("An unexpected error occurred.");
@@ -329,7 +345,9 @@ console.log("alll data check",payload)
               placeholder="Enter store name"
               className="w-full"
             />
-            {fieldErrors.storeName && <p className="text-red-500 text-sm">{fieldErrors.storeName}</p>}
+            {fieldErrors.storeName && (
+              <p className="text-red-500 text-sm">{fieldErrors.storeName}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -343,7 +361,11 @@ console.log("alll data check",payload)
               placeholder="Enter customer full name"
               className="w-full"
             />
-            {fieldErrors.storePersonName && <p className="text-red-500 text-sm">{fieldErrors.storePersonName}</p>}
+            {fieldErrors.storePersonName && (
+              <p className="text-red-500 text-sm">
+                {fieldErrors.storePersonName}
+              </p>
+            )}
           </div>
         </div>
 
@@ -356,27 +378,36 @@ console.log("alll data check",payload)
               name="storePhone"
               type="tel"
               value={formData.storePhone}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter store phone number"
-              className="w-full"
-            />
-            {fieldErrors.storePhone && <p className="text-red-500 text-sm">{fieldErrors.storePhone}</p>}
-          </div>
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, ""); // Remove non-digit characters
+                let formatted = raw;
 
-          <div className="space-y-2">
-            <Label htmlFor="storePersonPhone">Cell Phone Number *</Label>
-            <Input
-              id="storePersonPhone"
-              name="storePersonPhone"
-              type="tel"
-              value={formData.storePersonPhone}
-              onChange={handleInputChange}
+                if (raw.length > 0) {
+                  formatted = `(${raw.slice(0, 3)}`;
+                }
+                if (raw.length >= 4) {
+                  formatted += `)${raw.slice(3, 6)}`;
+                }
+                if (raw.length >= 7) {
+                  formatted += `-${raw.slice(6, 10)}`;
+                }
+
+                const syntheticEvent = {
+                  target: {
+                    name: "storePhone",
+                    value: formatted,
+                  },
+                } as React.ChangeEvent<HTMLInputElement>;
+
+                handleInputChange(syntheticEvent);
+              }}
               required
-              placeholder="Enter cell phone number"
+              placeholder="(123)456-7890"
               className="w-full"
             />
-            {fieldErrors.storePersonPhone && <p className="text-red-500 text-sm">{fieldErrors.storePersonPhone}</p>}
+            {fieldErrors.storePhone && (
+              <p className="text-red-500 text-sm">{fieldErrors.storePhone}</p>
+            )}
           </div>
         </div>
 
@@ -396,26 +427,47 @@ console.log("alll data check",payload)
               className="w-full"
             />
             {fieldErrors.storeAuthorizedPersonName && (
-              <p className="text-red-500 text-sm">{fieldErrors.storeAuthorizedPersonName}</p>
+              <p className="text-red-500 text-sm">
+                {fieldErrors.storeAuthorizedPersonName}
+              </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="storeAuthorizedPersonNumber">
-              Store Authorized Person Number (For Order) *
+              Authorized Person Number (For Order) *
             </Label>
             <Input
               id="storeAuthorizedPersonNumber"
               name="storeAuthorizedPersonNumber"
               type="tel"
               value={formData.storeAuthorizedPersonNumber}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, "").slice(0, 10); // Keep only 10 digits
+                const formatted =
+                  raw.length >= 6
+                    ? `(${raw.slice(0, 3)})${raw.slice(3, 6)}-${raw.slice(6)}`
+                    : raw.length >= 3
+                    ? `(${raw.slice(0, 3)})${raw.slice(3)}`
+                    : raw;
+
+                const syntheticEvent = {
+                  target: {
+                    name: "storeAuthorizedPersonNumber",
+                    value: formatted,
+                  },
+                } as React.ChangeEvent<HTMLInputElement>;
+
+                handleInputChange(syntheticEvent);
+              }}
               required
-              placeholder="Enter authorized person number"
+              placeholder="(111)111-1111"
               className="w-full"
             />
             {fieldErrors.storeAuthorizedPersonNumber && (
-              <p className="text-red-500 text-sm">{fieldErrors.storeAuthorizedPersonNumber}</p>
+              <p className="text-red-500 text-sm">
+                {fieldErrors.storeAuthorizedPersonNumber}
+              </p>
             )}
           </div>
         </div>
@@ -433,7 +485,11 @@ console.log("alll data check",payload)
             placeholder="Enter email address"
             className="w-full"
           />
-          {fieldErrors.storePersonEmail && <p className="text-red-500 text-sm">{fieldErrors.storePersonEmail}</p>}
+          {fieldErrors.storePersonEmail && (
+            <p className="text-red-500 text-sm">
+              {fieldErrors.storePersonEmail}
+            </p>
+          )}
         </div>
 
         {/* Billing Address */}
@@ -450,7 +506,11 @@ console.log("alll data check",payload)
               rows={3}
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            {fieldErrors.billingAddress && <p className="text-red-500 text-sm">{fieldErrors.billingAddress}</p>}
+            {fieldErrors.billingAddress && (
+              <p className="text-red-500 text-sm">
+                {fieldErrors.billingAddress}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -465,7 +525,11 @@ console.log("alll data check",payload)
                 placeholder="Enter billing city"
                 className="w-full"
               />
-              {fieldErrors.billingCity && <p className="text-red-500 text-sm">{fieldErrors.billingCity}</p>}
+              {fieldErrors.billingCity && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.billingCity}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -473,66 +537,68 @@ console.log("alll data check",payload)
               <select
                 id="billingState"
                 name="billingState"
-               
                 onChange={handleInputChange}
                 required
-                
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select State</option>
-               <option value="AL">Alabama</option>
-            <option value="AK">Alaska</option>
-            <option value="AZ">Arizona</option>
-            <option value="AR">Arkansas</option>
-            <option value="CA">California</option>
-            <option value="CO">Colorado</option>
-            <option value="CT">Connecticut</option>
-            <option value="DE">Delaware</option>
-            <option value="FL">Florida</option>
-            <option value="GA">Georgia</option>
-            <option value="HI">Hawaii</option>
-            <option value="ID">Idaho</option>
-            <option value="IL">Illinois</option>
-            <option value="IN">Indiana</option>
-            <option value="IA">Iowa</option>
-            <option value="KS">Kansas</option>
-            <option value="KY">Kentucky</option>
-            <option value="LA">Louisiana</option>
-            <option value="ME">Maine</option>
-            <option value="MD">Maryland</option>
-            <option value="MA">Massachusetts</option>
-            <option value="MI">Michigan</option>
-            <option value="MN">Minnesota</option>
-            <option value="MS">Mississippi</option>
-            <option value="MO">Missouri</option>
-            <option value="MT">Montana</option>
-            <option value="NE">Nebraska</option>
-            <option value="NV">Nevada</option>
-            <option value="NH">New Hampshire</option>
-            <option value="NJ">New Jersey</option>
-            <option value="NM">New Mexico</option>
-            <option value="NY">New York</option>
-            <option value="NC">North Carolina</option>
-            <option value="ND">North Dakota</option>
-            <option value="OH">Ohio</option>
-            <option value="OK">Oklahoma</option>
-            <option value="OR">Oregon</option>
-            <option value="PA">Pennsylvania</option>
-            <option value="RI">Rhode Island</option>
-            <option value="SC">South Carolina</option>
-            <option value="SD">South Dakota</option>
-            <option value="TN">Tennessee</option>
-            <option value="TX">Texas</option>
-            <option value="UT">Utah</option>
-            <option value="VT">Vermont</option>
-            <option value="VA">Virginia</option>
-            <option value="WA">Washington</option>
-            <option value="WV">West Virginia</option>
-            <option value="WI">Wisconsin</option>
-            <option value="WY">Wyoming</option>
+                <option value="AL">Alabama</option>
+                <option value="AK">Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="AR">Arkansas</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="CT">Connecticut</option>
+                <option value="DE">Delaware</option>
+                <option value="FL">Florida</option>
+                <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
                 {/* Add more states as needed */}
               </select>
-              {fieldErrors.billingState && <p className="text-red-500 text-sm">{fieldErrors.billingState}</p>}
+              {fieldErrors.billingState && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.billingState}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -546,7 +612,11 @@ console.log("alll data check",payload)
                 placeholder="Enter billing zipcode"
                 className="w-full"
               />
-              {fieldErrors.billingZipcode && <p className="text-red-500 text-sm">{fieldErrors.billingZipcode}</p>}
+              {fieldErrors.billingZipcode && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.billingZipcode}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -584,7 +654,11 @@ console.log("alll data check",payload)
               disabled={formData.sameAsBillingAddress}
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            {fieldErrors.shippingAddress && <p className="text-red-500 text-sm">{fieldErrors.shippingAddress}</p>}
+            {fieldErrors.shippingAddress && (
+              <p className="text-red-500 text-sm">
+                {fieldErrors.shippingAddress}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -600,7 +674,11 @@ console.log("alll data check",payload)
                 disabled={formData.sameAsBillingAddress}
                 className="w-full"
               />
-              {fieldErrors.shippingCity && <p className="text-red-500 text-sm">{fieldErrors.shippingCity}</p>}
+              {fieldErrors.shippingCity && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.shippingCity}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -611,11 +689,11 @@ console.log("alll data check",payload)
                 value={formData.shippingState}
                 onChange={handleInputChange}
                 required
-                
                 disabled={formData.sameAsBillingAddress}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select State</option>
+               <option value="">Select State</option>
                 <option value="AL">Alabama</option>
                 <option value="AK">Alaska</option>
                 <option value="AZ">Arizona</option>
@@ -626,9 +704,53 @@ console.log("alll data check",payload)
                 <option value="DE">Delaware</option>
                 <option value="FL">Florida</option>
                 <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
                 {/* Add more states as needed */}
               </select>
-              {fieldErrors.shippingState && <p className="text-red-500 text-sm">{fieldErrors.shippingState}</p>}
+              {fieldErrors.shippingState && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.shippingState}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -643,7 +765,11 @@ console.log("alll data check",payload)
                 disabled={formData.sameAsBillingAddress}
                 className="w-full"
               />
-              {fieldErrors.shippingZipcode && <p className="text-red-500 text-sm">{fieldErrors.shippingZipcode}</p>}
+              {fieldErrors.shippingZipcode && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.shippingZipcode}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -660,7 +786,6 @@ console.log("alll data check",payload)
               placeholder="Enter sales tax ID"
               className="w-full"
             />
-           
           </div>
 
           <div className="space-y-2">
@@ -671,11 +796,12 @@ console.log("alll data check",payload)
               type="number"
               value={formData.termDays}
               onChange={handleInputChange}
-              
               placeholder="Enter term days"
               className="w-full"
             />
-            {fieldErrors.termDays && <p className="text-red-500 text-sm">{fieldErrors.termDays}</p>}
+            {fieldErrors.termDays && (
+              <p className="text-red-500 text-sm">{fieldErrors.termDays}</p>
+            )}
           </div>
         </div>
 
@@ -695,32 +821,42 @@ console.log("alll data check",payload)
               </div>
               {isDropdownOpen && (
                 <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md p-2">
-                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
-                    (day) => (
-                      <div key={day} className="flex items-center space-x-2 py-1">
-                        <input
-                          type="checkbox"
-                          id={`acceptDeliveryDays-${day}`}
-                          name="acceptDeliveryDays"
-                          value={day}
-                          checked={formData.acceptDeliveryDays.includes(day.toLowerCase())}
-                          onChange={handleDeliveryDaysChange}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                        <Label
-                          htmlFor={`acceptDeliveryDays-${day}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {day}
-                        </Label>
-                      </div>
-                    )
-                  )}
+                  {[
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                  ].map((day) => (
+                    <div key={day} className="flex items-center space-x-2 py-1">
+                      <input
+                        type="checkbox"
+                        id={`acceptDeliveryDays-${day}`}
+                        name="acceptDeliveryDays"
+                        value={day}
+                        checked={formData.acceptDeliveryDays.includes(
+                          day.toLowerCase()
+                        )}
+                        onChange={handleDeliveryDaysChange}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label
+                        htmlFor={`acceptDeliveryDays-${day}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {day}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
             {fieldErrors.acceptDeliveryDays && (
-              <p className="text-red-500 text-sm">{fieldErrors.acceptDeliveryDays}</p>
+              <p className="text-red-500 text-sm">
+                {fieldErrors.acceptDeliveryDays}
+              </p>
             )}
           </div>
 
@@ -732,14 +868,17 @@ console.log("alll data check",payload)
               value={formData.shippingStatus}
               onChange={handleInputChange}
               required
-              
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="SILVER">SILVER</option>
               <option value="GOLD">GOLD</option>
               <option value="PLATINUM">PLATINUM</option>
             </select>
-            {fieldErrors.shippingStatus && <p className="text-red-500 text-sm">{fieldErrors.shippingStatus}</p>}
+            {fieldErrors.shippingStatus && (
+              <p className="text-red-500 text-sm">
+                {fieldErrors.shippingStatus}
+              </p>
+            )}
           </div>
         </div>
 
@@ -755,14 +894,18 @@ console.log("alll data check",payload)
             rows={3}
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
-          {fieldErrors.note && <p className="text-red-500 text-sm">{fieldErrors.note}</p>}
+          {fieldErrors.note && (
+            <p className="text-red-500 text-sm">{fieldErrors.note}</p>
+          )}
         </div>
 
         <Separator />
 
         {/* Bank ACH Account Information */}
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Bank ACH Account Information</h3>
+          <h3 className="text-lg font-semibold">
+            Bank ACH Account Information
+          </h3>
           <textarea
             id="bankAchInfo"
             name="bankAchInfo"
@@ -770,10 +913,8 @@ console.log("alll data check",payload)
             onChange={handleInputChange}
             placeholder="Enter bank ACH account information"
             rows={5}
-
             className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
-         
         </div>
 
         {/* File Uploads */}
@@ -814,7 +955,9 @@ console.log("alll data check",payload)
                         />
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-500">Click to upload</span>
+                    <span className="text-sm text-gray-500">
+                      Click to upload
+                    </span>
                   </>
                 )}
                 <input
@@ -827,7 +970,9 @@ console.log("alll data check",payload)
                 />
               </label>
               {fieldErrors.creditApplication && (
-                <p className="text-red-500 text-sm">{fieldErrors.creditApplication}</p>
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.creditApplication}
+                </p>
               )}
             </div>
 
@@ -866,7 +1011,9 @@ console.log("alll data check",payload)
                         />
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-500">Click to upload</span>
+                    <span className="text-sm text-gray-500">
+                      Click to upload
+                    </span>
                   </>
                 )}
                 <input
@@ -879,7 +1026,9 @@ console.log("alll data check",payload)
                 />
               </label>
               {fieldErrors.ownerLegalFrontImage && (
-                <p className="text-red-500 text-sm">{fieldErrors.ownerLegalFrontImage}</p>
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.ownerLegalFrontImage}
+                </p>
               )}
             </div>
 
@@ -918,7 +1067,9 @@ console.log("alll data check",payload)
                         />
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-500">Click to upload</span>
+                    <span className="text-sm text-gray-500">
+                      Click to upload
+                    </span>
                   </>
                 )}
                 <input
@@ -931,7 +1082,9 @@ console.log("alll data check",payload)
                 />
               </label>
               {fieldErrors.ownerLegalBackImage && (
-                <p className="text-red-500 text-sm">{fieldErrors.ownerLegalBackImage}</p>
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.ownerLegalBackImage}
+                </p>
               )}
             </div>
 
@@ -970,7 +1123,9 @@ console.log("alll data check",payload)
                         />
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-500">Click to upload</span>
+                    <span className="text-sm text-gray-500">
+                      Click to upload
+                    </span>
                   </>
                 )}
                 <input
@@ -983,7 +1138,9 @@ console.log("alll data check",payload)
                 />
               </label>
               {fieldErrors.voidedCheckImage && (
-                <p className="text-red-500 text-sm">{fieldErrors.voidedCheckImage}</p>
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.voidedCheckImage}
+                </p>
               )}
             </div>
 
@@ -1022,7 +1179,9 @@ console.log("alll data check",payload)
                         />
                       </svg>
                     </div>
-                    <span className="text-sm text-gray-500">Click to upload</span>
+                    <span className="text-sm text-gray-500">
+                      Click to upload
+                    </span>
                   </>
                 )}
                 <input
@@ -1034,7 +1193,11 @@ console.log("alll data check",payload)
                   className="hidden"
                 />
               </label>
-              {fieldErrors.miscellaneous && <p className="text-red-500 text-sm">{fieldErrors.miscellaneous}</p>}
+              {fieldErrors.miscellaneous && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.miscellaneous}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -1056,7 +1219,7 @@ console.log("alll data check",payload)
           <Button
             type="submit"
             className="px-6 py-2 bg-red-600 hover:bg-red-700 cursor-pointer text-white"
-            disabled={isLoading }
+            disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Save"}
           </Button>

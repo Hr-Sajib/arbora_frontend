@@ -377,22 +377,7 @@ export default function AddProspact(): React.ReactElement {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="storePhone">
-              Store Phone Number{" "}
-              <strong className="text-red-600 text-xl">*</strong>
-            </Label>
-            <Input
-              id="storePhone"
-              name="storePhone"
-              type="tel"
-              value={formData.storePhone}
-              onChange={handleInputChange}
-              placeholder="(847)708-3849"
-              className="w-full"
-              required
-            />
-          </div>
+          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -411,23 +396,75 @@ export default function AddProspact(): React.ReactElement {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="storePersonPhone">
-              Cell Phone Number{" "}
-              <strong className="text-red-600 text-xl">*</strong>
-            </Label>
+          <div className="space-y-2 relative top-3">
+            <Label htmlFor="storePhone">Store Phone Number *</Label>
             <Input
-              id="storePersonPhone"
-              name="storePersonPhone"
+              id="storePhone"
+              name="storePhone"
               type="tel"
-              value={formData.storePersonPhone}
-              onChange={handleInputChange}
-              placeholder="(847)708-3849 "
-              className="w-full"
+              value={formData.storePhone}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, ""); // Remove non-digit characters
+                let formatted = raw;
+
+                if (raw.length > 0) {
+                  formatted = `(${raw.slice(0, 3)}`;
+                }
+                if (raw.length >= 4) {
+                  formatted += `)${raw.slice(3, 6)}`;
+                }
+                if (raw.length >= 7) {
+                  formatted += `-${raw.slice(6, 10)}`;
+                }
+
+                const syntheticEvent = {
+                  target: {
+                    name: "storePhone",
+                    value: formatted,
+                  },
+                } as React.ChangeEvent<HTMLInputElement>;
+
+                handleInputChange(syntheticEvent);
+              }}
               required
+              placeholder="(123)456-7890"
+              className="w-full"
             />
           </div>
+          
         </div>
+        <div className="space-y-2">
+                    <Label htmlFor="storePersonPhone">
+                      Authorized Person Number (For Order) *
+                    </Label>
+                    <Input
+                      id="storePersonPhone"
+                      name="storePersonPhone"
+                      type="tel"
+                      value={formData.storePersonPhone}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "").slice(0, 10); // Keep only 10 digits
+                        const formatted =
+                          raw.length >= 6
+                            ? `(${raw.slice(0, 3)})${raw.slice(3, 6)}-${raw.slice(6)}`
+                            : raw.length >= 3
+                            ? `(${raw.slice(0, 3)})${raw.slice(3)}`
+                            : raw;
+        
+                        const syntheticEvent = {
+                          target: {
+                            name: "storePersonPhone",
+                            value: formatted,
+                          },
+                        } as React.ChangeEvent<HTMLInputElement>;
+        
+                        handleInputChange(syntheticEvent);
+                      }}
+                      required
+                      placeholder="(111)111-1111"
+                      className="w-full"
+                    />
+                  </div>
 
         <div className="space-y-2">
           <Label htmlFor="storePersonEmail">Email Address</Label>

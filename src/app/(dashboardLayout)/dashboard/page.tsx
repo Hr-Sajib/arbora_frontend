@@ -160,7 +160,7 @@ export default function AppSidebar() {
                           alt="Profile"
                           className="rounded-full"
                         />
-                        <span className="text-[16px]">Order Management</span>
+                        <span className="text-[16px]">Orders</span>
                       </Link>
                     </button>
                   )}

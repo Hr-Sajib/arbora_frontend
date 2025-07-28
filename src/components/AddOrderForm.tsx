@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useGetCustomersQuery } from "@/redux/api/customers/customersApi";
 import { useGetCategoriesQuery } from "@/redux/api/category/categoryApi";
-import { useGetProductsByCategoryQuery } from "@/redux/api/product/productApi";
+import { useGetProductsQuery } from "@/redux/api/product/productApi";
 import { useAddOrderMutation } from "@/redux/api/order/orderManagementApi";
 
 import {
@@ -81,9 +81,9 @@ interface OrderProduct {
   discount: number;
 }
 
-// Updated payload interface to include payment due date
 interface OrderPayload {
   date: string;
+  shippingDate: string; // Added shippingDate to payload
   storeId: string;
   paymentDueDate: string;
   orderAmount: number;
@@ -92,7 +92,7 @@ interface OrderPayload {
 
 interface AddOrderPageProps {
   setAddOrderOpen: (open: boolean) => void;
-  onAddSuccess: () => void; // Add this line
+  onAddSuccess: () => void;
 }
 
 const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSuccess }) => {  
@@ -100,7 +100,10 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
   const [orderDate, setOrderDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [paymentDueDate, setPaymentDueDate] = useState<string>(""); // Added payment due date
+  const [shippingDate, setShippingDate] = useState<string>( // New state for shipping date
+    new Date().toISOString().split("T")[0]
+  );
+  const [paymentDueDate, setPaymentDueDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
@@ -114,9 +117,7 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
   const categories = categoryData?.data ?? [];
 
   const { data: productResponse, isLoading: productLoading } =
-    useGetProductsByCategoryQuery(selectedCategoryId, {
-      skip: !selectedCategoryId,
-    });
+    useGetProductsQuery();
   const products = productResponse?.data ?? [];
 
   const [addOrder, { isLoading: isOrderSubmitting }] = useAddOrderMutation();
@@ -206,11 +207,19 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
     );
   };
 
-  const filteredProducts = products.filter(
-    (product: Product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.itemNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ✅ Updated: filter across all categories on search, otherwise filter by selected category
+  const filteredProducts =
+    searchTerm.trim() !== ""
+      ? products.filter(
+          (product: Product) =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.itemNumber.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : selectedCategoryId
+      ? products.filter(
+          (product) => product.categoryId._id === selectedCategoryId
+        )
+      : products;
 
   const calculateTotals = () => {
     const totalAmount = orderItems.reduce((acc, item) => acc + item.total, 0);
@@ -226,9 +235,9 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
 
   const { totalAmount, totalQuantity } = calculateTotals();
 
-  // Updated payload construction to include payment due date
   const constructOrderPayload = (): OrderPayload => ({
     date: orderDate,
+    shippingDate: shippingDate, // Added shippingDate to payload
     storeId: selectedClient,
     paymentDueDate,
     orderAmount: Math.round(totalAmount),
@@ -239,32 +248,31 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
     })),
   });
 
-const handlePlaceOrder = async () => {
-  if (!selectedClient || orderItems.length === 0) {
-    alert("Please select a client and add items");
-    return;
-  }
+  const handlePlaceOrder = async () => {
+    if (!selectedClient || orderItems.length === 0) {
+      alert("Please select a client and add items");
+      return;
+    }
 
-  const payload = constructOrderPayload();
-  console.log("Order payload:", payload); // For debugging
+    const payload = constructOrderPayload();
 
-  try {
-    await addOrder(payload).unwrap();
-    // Reset form including payment due date
-    setOrderItems([]);
-    setSearchTerm("");
-    setSelectedClient("");
-    setOrderDate(new Date().toISOString().split("T")[0]);
-    setPaymentDueDate(""); // Reset payment due date
-    alert("Order placed successfully!");
-    onAddSuccess(); // Add this line to close the modal
-  } catch (err: any) {
-    console.error("Order creation error:", err);
-    alert(
-      "Order failed: " + (err?.data?.message || err?.error || "Unknown error")
-    );
-  }
-};
+    try {
+      await addOrder(payload).unwrap();
+      setOrderItems([]);
+      setSearchTerm("");
+      setSelectedClient("");
+      setOrderDate(new Date().toISOString().split("T")[0]);
+      setShippingDate(new Date().toISOString().split("T")[0]); // Reset shipping date
+      setPaymentDueDate("");
+      alert("Order placed successfully!");
+      onAddSuccess();
+    } catch (err: any) {
+      console.error("Order creation error:", err);
+      alert(
+        "Order failed: " + (err?.data?.message || err?.error || "Unknown error")
+      );
+    }
+  };
 
   return (
     <Card className="w-full flex flex-col">
@@ -273,7 +281,8 @@ const handlePlaceOrder = async () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <User className="w-4 h-4" /> Select Client <span className="text-red-700">*</span>
+              <User className="w-4 h-4" /> Select Client{" "}
+              <span className="text-red-700">*</span>
             </Label>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
               <SelectTrigger>
@@ -297,7 +306,8 @@ const handlePlaceOrder = async () => {
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Order Date <span className="text-red-700">*</span>
+              <Calendar className="w-4 h-4" /> Order Date{" "}
+              <span className="text-red-700">*</span>
             </Label>
             <Input
               type="date"
@@ -308,19 +318,21 @@ const handlePlaceOrder = async () => {
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Delivery Date <span className="text-red-700">*</span>
+              <Calendar className="w-4 h-4" /> Delivery Date{" "}
+              <span className="text-red-700">*</span>
             </Label>
             <Input
               type="date"
               name="shippingDate"
-              value={orderDate}
-              onChange={(e) => setOrderDate(e.target.value)}
+              value={shippingDate} // Updated to use shippingDate state
+              onChange={(e) => setShippingDate(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" /> Payment Due Date <span className="text-red-700">*</span>
+              <Calendar className="w-4 h-4" /> Payment Due Date{" "}
+              <span className="text-red-700">*</span>
             </Label>
             <Input
               type="date"
@@ -395,6 +407,9 @@ const handlePlaceOrder = async () => {
                     const orderItem = orderItems.find(
                       (item) => item.product.id === product._id
                     );
+                    const productCategory = categories.find(
+                      (cat) => cat._id === product.categoryId._id
+                    )?.name;
                     return (
                       <div
                         key={product._id}
@@ -405,6 +420,12 @@ const handlePlaceOrder = async () => {
                             <div className="font-semibold">{product.name}</div>
                             <div className="text-xs text-muted">
                               SKU: {product.itemNumber}
+                            </div>
+                            <div className="text-xs">
+                              Category:{" "}
+                              <span className="font-medium text-blue-600">
+                                {productCategory}
+                              </span>
                             </div>
                           </div>
                           <div className="text-sm font-semibold">
@@ -533,7 +554,7 @@ const handlePlaceOrder = async () => {
                             {item.product.name}
                           </span>
                           <span className="text-xs text-gray-500">
-                            Qty: {item.quantity} | Discount: ₹{item.discount}
+                            Qty: {item.quantity} | Discount: ${item.discount}
                           </span>
                         </div>
                         <span className="font-semibold ml-2">
@@ -547,7 +568,7 @@ const handlePlaceOrder = async () => {
               <div className="border-t px-4 py-2 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Total Qty:</span>
-                  <span className="font-semibold">{totalQuantity}</span>
+                  <span className="font-medium">{totalQuantity}</span>
                 </div>
                 <div className="flex justify-between font-bold text-base">
                   <span>Order Amount:</span>
@@ -559,11 +580,13 @@ const handlePlaceOrder = async () => {
         </div>
 
         <div className="flex justify-end mt-4">
-        
-          <Button onClick={() => setAddOrderOpen(false)} variant="outline" className="mr-2">
-  Cancel
-</Button>
-        
+          <Button
+            onClick={() => setAddOrderOpen(false)}
+            variant="outline"
+            className="mr-2"
+          >
+            Cancel
+          </Button>
           <Button
             className="bg-blue-600 hover:bg-blue-700"
             disabled={
