@@ -20,11 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  CalendarIcon,
-  Upload,
-  ArrowUpDown,
-} from "lucide-react";
+import { CalendarIcon, Upload, ArrowUpDown } from "lucide-react";
 import {
   useForm,
   Controller,
@@ -34,7 +30,7 @@ import {
 import ImageGenetors from "@/utils/ImgeGenetor";
 import {
   useGetPaymentHistoryQuery,
-  useInsertPaymentMutation
+  useInsertPaymentMutation,
 } from "@/redux/api/order/orderManagementApi";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -59,10 +55,18 @@ export default function Payment({
   const [image, setImage] = useState("");
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]); // Track selected order IDs
 
-  const { data: paymentData, isLoading: isPaymentLoading, isError: isPaymentError, refetch: refetchPayment } =
-    useGetPaymentHistoryQuery(paymentId);
-  const { data: customerData, isLoading: isCustomerLoading, isError: isCustomerError, refetch: refetchCustomer } =
-    useGetCustomerQuery(paymentId);
+  const {
+    data: paymentData,
+    isLoading: isPaymentLoading,
+    isError: isPaymentError,
+    refetch: refetchPayment,
+  } = useGetPaymentHistoryQuery(paymentId);
+  const {
+    data: customerData,
+    isLoading: isCustomerLoading,
+    isError: isCustomerError,
+    refetch: refetchCustomer,
+  } = useGetCustomerQuery(paymentId);
   const [addPayment, { isLoading }] = useInsertPaymentMutation(); // Destructure isLoading from mutation
 
   const handleFileChange = async (event: any) => {
@@ -123,16 +127,16 @@ export default function Payment({
   }, 0);
 
   // Filter orders with openBalance > 0
-  const ordersWithOpenBalance = customerData?.data?.customerOrders?.filter(
-    (order: any) => order.openBalance > 0
-  ) || [];
+  const ordersWithOpenBalance =
+    customerData?.data?.customerOrders?.filter(
+      (order: any) => order.openBalance > 0
+    ) || [];
 
   // Handle checkbox change
   const handleCheckboxChange = (orderId: string) => {
-    setSelectedOrderIds((prev) =>
-      prev.includes(orderId)
-        ? prev.filter((id) => id !== orderId)
-        : [orderId] // Single selection for now; use [...prev, orderId] for multiple
+    setSelectedOrderIds(
+      (prev) =>
+        prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [orderId] // Single selection for now; use [...prev, orderId] for multiple
     );
   };
 
@@ -144,8 +148,7 @@ export default function Payment({
           <h1 className="text-2xl font-semibold text-gray-900">
             Update Payment Received
           </h1>
-          <div className="flex items-center gap-4">
-          </div>
+          <div className="flex items-center gap-4"></div>
         </div>
 
         {/* Payment Form */}
@@ -305,20 +308,29 @@ export default function Payment({
         </form>
 
         {/* Orders with Open Balance Table */}
-        <h1 className="font-semibold mt-8 text-red-800 flex items-center gap-1"><span className="text-xl">▶</span> Customer Orders with Open Balance</h1>
+        <h1 className="font-semibold mt-8 text-red-800 flex items-center gap-1">
+          <span className="text-xl">▶</span> Customer Orders with Open Balance
+        </h1>
         <Card className="pl-5">
           <CardContent className="p-0">
             {isCustomerLoading ? (
-              <div className="p-6 text-center text-gray-700">Loading orders...</div>
+              <div className="p-6 text-center text-gray-700">
+                Loading orders...
+              </div>
             ) : isCustomerError ? (
-              <div className="p-6 text-center text-red-600">Error loading orders. Please try again.</div>
+              <div className="p-6 text-center text-red-600">
+                Error loading orders. Please try again.
+              </div>
             ) : ordersWithOpenBalance.length === 0 ? (
-              <div className="p-6 text-center text-gray-700">No orders with open balance found.</div>
+              <div className="p-6 text-center text-gray-700">
+                No orders with open balance found.
+              </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12"></TableHead> {/* Checkbox column */}
+                    <TableHead className="w-12"></TableHead>{" "}
+                    {/* Checkbox column */}
                     <TableHead className="font-medium">Order</TableHead>
                     <TableHead className="font-medium">
                       <div className="flex items-center gap-1">Invoice No.</div>
@@ -326,7 +338,9 @@ export default function Payment({
                     <TableHead className="font-medium">
                       <div className="flex items-center gap-1">Order Date</div>
                     </TableHead>
-                    <TableHead className="font-medium">Payment Due Date</TableHead>
+                    <TableHead className="font-medium">
+                      Payment Due Date
+                    </TableHead>
                     <TableHead className="font-medium">Order Amount</TableHead>
                     <TableHead className="font-medium flex items-center gap-1">
                       Open Balance
@@ -340,7 +354,9 @@ export default function Payment({
                       <TableCell>
                         <Checkbox
                           checked={selectedOrderIds.includes(order._id)}
-                          onCheckedChange={() => handleCheckboxChange(order._id)}
+                          onCheckedChange={() =>
+                            handleCheckboxChange(order._id)
+                          }
                         />
                       </TableCell>
                       <Link href={`/dashboard/order-management/${order._id}`}>
@@ -350,7 +366,9 @@ export default function Payment({
                       <TableCell>{order.date}</TableCell>
                       <TableCell>{order.paymentDueDate}</TableCell>
                       <TableCell>${order.orderAmount.toFixed(2)}</TableCell>
-                      <TableCell className="text-red-800 font-semibold">${order.openBalance.toFixed(2)}</TableCell>
+                      <TableCell className="text-red-800 font-semibold">
+                        ${order.openBalance.toFixed(2)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -365,8 +383,8 @@ export default function Payment({
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="">
-                  <TableHead className="w-12">For Order</TableHead>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead className="font-medium">
                     <div className="flex items-center gap-1">Invoice No.</div>
                   </TableHead>
@@ -377,23 +395,44 @@ export default function Payment({
                     Payment Due Date
                   </TableHead>
                   <TableHead className="font-medium">Order Amount</TableHead>
+                  <TableHead className="font-medium">Method</TableHead>
                   <TableHead className="font-medium flex items-center gap-1">
                     Payment Amount
                     <ArrowUpDown className="h-4 w-4" />
                   </TableHead>
+                  <TableHead className="font-medium">Check</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paymentData?.data?.map((row: any, index: number) => (
                   <TableRow key={index}>
                     <Link href={`/dashboard/order-management/${row._id}`}>
-                      <TableCell>{row.forOrderId.PONumber}</TableCell>
+                      <TableCell>{row.forOrderId?.PONumber || "N/A"}</TableCell>
                     </Link>
-                    <TableCell>{row.forOrderId.invoiceNumber}</TableCell>
+                    <TableCell>
+                      {row.forOrderId?.invoiceNumber || "N/A"}
+                    </TableCell>
                     <TableCell>{row.date}</TableCell>
-                    <TableCell>{row.forOrderId.paymentDueDate}</TableCell>
-                    <TableCell>${row.forOrderId.orderAmount}</TableCell>
+                    <TableCell>
+                      {row.forOrderId?.paymentDueDate || "N/A"}
+                    </TableCell>
+                    <TableCell>${row.forOrderId?.orderAmount || 0}</TableCell>
+                    <TableCell>{row.method}</TableCell>
                     <TableCell>${row.amount}</TableCell>
+                    <TableCell>
+                      {row.method === "check" && row.checkImage ? (
+                        <a
+                          href={row.checkImage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          View Check
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

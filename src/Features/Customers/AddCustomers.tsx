@@ -133,7 +133,6 @@ export default function AddCustomer(): React.ReactElement {
       delete newErrors[name];
       return newErrors;
     });
-    console.log("name nad vale", name, value);
   };
 
   // Handle same as billing address checkbox
@@ -247,81 +246,98 @@ export default function AddCustomer(): React.ReactElement {
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Validate required fields
-    const newErrors: FieldErrors = {};
-    requiredFields.forEach((field) => {
-      if (!formData[field]) {
-        newErrors[field] = "This field is required.";
-      } else if (
-        field === "acceptDeliveryDays" &&
-        formData[field].length === 0
-      ) {
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  // Validate required fields
+  const newErrors: FieldErrors = {};
+  requiredFields.forEach((field) => {
+    if (field === "acceptDeliveryDays") {
+      if (formData[field].length === 0) {
         newErrors[field] = "At least one delivery day is required.";
-      } else if (
-        field === "termDays" &&
-        (parseInt(formData[field]) <= 0 || !formData[field])
-      ) {
+      }
+    } else if (field === "termDays") {
+      if (!formData[field] || parseInt(formData[field]) <= 0) {
         newErrors[field] = "Valid term days are required.";
       }
-    });
-    if (Object.keys(newErrors).length > 0) {
-      setFieldErrors(newErrors);
-      return;
+    } else if (!formData[field]) {
+      newErrors[field] = "This field is required.";
     }
+  });
+  if (Object.keys(newErrors).length > 0) {
+    console.log("Validation errors:", newErrors);
+    setFieldErrors(newErrors);
+    return;
+  }
 
-    try {
-      const payload = {
-        storeName: formData.storeName,
-        storePhone: formData.storePhone,
-        storePersonEmail: formData.storePersonEmail,
-        storePersonName: formData.storePersonName,
-        storePersonPhone: formData.storePersonPhone,
-        storeAuthorizedPersonName: formData.storeAuthorizedPersonName,
-        storeAuthorizedPersonNumber: formData.storeAuthorizedPersonNumber,
-        billingAddress: formData.billingAddress,
-        billingCity: formData.billingCity,
-        billingState: formData.billingState,
-        billingZipcode: formData.billingZipcode,
-        shippingAddress: formData.shippingAddress,
-        shippingCity: formData.shippingCity,
-        shippingState: formData.shippingState,
-        shippingZipcode: formData.shippingZipcode,
-        salesTaxId: formData.salesTaxId || "Not provided",
-        acceptedDeliveryDays: formData.acceptDeliveryDays,
-        bankACHAccountInfo: formData.bankAchInfo,
-        creditApplication: formData.creditApplication || undefined,
-        ownerLegalFrontImage: formData.ownerLegalFrontImage || undefined,
-        ownerLegalBackImage: formData.ownerLegalBackImage || undefined,
-        voidedCheckImage: formData.voidedCheckImage || undefined,
-        termDays: formData.termDays ? parseInt(formData.termDays) : undefined,
-        shippingStatus: formData.shippingStatus || undefined,
-        note: formData.note || undefined,
-        miscellaneous: formData.miscellaneous || undefined,
-      };
-      console.log("alll data check", payload);
-      await addCustomer(payload).unwrap();
-      console.log("added customer", payload);
-      toast.success("Customer Added successfully");
-      router.push("/dashboard/customers");
-    } catch (err: any) {
-      console.error("Failed to add customer:", err);
-      if (err?.data?.errorSources) {
-        const errors = err.data.errorSources.reduce(
-          (acc: FieldErrors, source: any) => {
-            acc[source.path] = source.message;
-            return acc;
-          },
-          {}
-        );
-        setFieldErrors(errors);
-      } else {
-        toast.error("An unexpected error occurred.");
-      }
+  try {
+    const payload = {
+      storeName: formData.storeName,
+      storePhone: formData.storePhone.replace(/\D/g, ""),
+      storePersonEmail: formData.storePersonEmail,
+      storePersonName: formData.storePersonName,
+      storePersonPhone: formData.storePersonPhone.replace(/\D/g, ""),
+      storeAuthorizedPersonName: formData.storeAuthorizedPersonName,
+      storeAuthorizedPersonNumber: formData.storeAuthorizedPersonNumber.replace(/\D/g, ""),
+      billingAddress: formData.billingAddress,
+      billingCity: formData.billingCity,
+      billingState: formData.billingState,
+      billingZipcode: formData.billingZipcode,
+      shippingAddress: formData.shippingAddress,
+      shippingCity: formData.shippingCity,
+      shippingState: formData.shippingState,
+      shippingZipcode: formData.shippingZipcode,
+      salesTaxId: formData.salesTaxId || "Not provided",
+      acceptedDeliveryDays: formData.acceptDeliveryDays,
+      bankACHAccountInfo: formData.bankAchInfo || "",
+      creditApplication: formData.creditApplication || "",
+      ownerLegalFrontImage: formData.ownerLegalFrontImage || "",
+      ownerLegalBackImage: formData.ownerLegalBackImage || "",
+      voidedCheckImage: formData.voidedCheckImage || "",
+      termDays: formData.termDays ? parseInt(formData.termDays) : 30,
+      shippingStatus: formData.shippingStatus || "SILVER",
+      note: formData.note || "",
+      miscellaneous: formData.miscellaneous || "",
+    };
+    console.log("Submitting payload:", payload);
+    await addCustomer(payload).unwrap();
+    console.log("Customer added successfully:", payload);
+    toast.success("Customer Added successfully");
+    console.log("Navigating to /dashboard/customers");
+    router.push("/dashboard/customers");
+  } catch (err: any) {
+    console.error("Failed to add customer:", err);
+    console.log("Error details:", {
+      message: err.message,
+      status: err.status,
+      data: err.data,
+      originalError: err,
+    });
+    if (err?.data?.errorSources) {
+      const errors = err.data.errorSources.reduce(
+        (acc: FieldErrors, source: any) => {
+          acc[source.path] = source.message;
+          return acc;
+        },
+        {}
+      );
+      console.log("Field-specific errors:", errors);
+      setFieldErrors(errors);
+      // Show alert for field-specific errors
+      const errorMessages = Object.entries(errors)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join("\n");
+      alert(`\n${errorMessages}`);
+    } else if (err?.data?.message) {
+      // Show alert for server error message
+      alert(err.data.message);
+      toast.error(err.data.message);
+    } else {
+      // Fallback for unexpected errors
+      alert("An unexpected error occurred.");
+      toast.error(err.message || "An unexpected error occurred.");
     }
-  };
+  }
+};
 
   const handleCancel = () => {
     router.push("/dashboard/customers");
@@ -434,14 +450,14 @@ export default function AddCustomer(): React.ReactElement {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="storeAuthorizedPersonNumber">
+            <Label htmlFor="storePersonPhone">
               Authorized Person Number (For Order) *
             </Label>
             <Input
-              id="storeAuthorizedPersonNumber"
-              name="storeAuthorizedPersonNumber"
+              id="storePersonPhone"
+              name="storePersonPhone"
               type="tel"
-              value={formData.storeAuthorizedPersonNumber}
+              value={formData.storePersonPhone}
               onChange={(e) => {
                 const raw = e.target.value.replace(/\D/g, "").slice(0, 10); // Keep only 10 digits
                 const formatted =
@@ -453,7 +469,7 @@ export default function AddCustomer(): React.ReactElement {
 
                 const syntheticEvent = {
                   target: {
-                    name: "storeAuthorizedPersonNumber",
+                    name: "storePersonPhone",
                     value: formatted,
                   },
                 } as React.ChangeEvent<HTMLInputElement>;
@@ -464,9 +480,9 @@ export default function AddCustomer(): React.ReactElement {
               placeholder="(111)111-1111"
               className="w-full"
             />
-            {fieldErrors.storeAuthorizedPersonNumber && (
+            {fieldErrors.storePersonPhone && (
               <p className="text-red-500 text-sm">
-                {fieldErrors.storeAuthorizedPersonNumber}
+                {fieldErrors.storePersonPhone}
               </p>
             )}
           </div>
@@ -693,7 +709,7 @@ export default function AddCustomer(): React.ReactElement {
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select State</option>
-               <option value="">Select State</option>
+                <option value="">Select State</option>
                 <option value="AL">Alabama</option>
                 <option value="AK">Alaska</option>
                 <option value="AZ">Arizona</option>

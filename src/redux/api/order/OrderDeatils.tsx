@@ -43,7 +43,7 @@ const OrderDetails = ({ id }: { id: string }) => {
   const [productSearch, setProductSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState("");
-  const [discount, setDiscount] = useState("");
+  const [discount, setDiscount] = useState("0");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Controls dropdown visibility
   const { data: orderData, isError: orderError, isLoading: orderLoading, refetch: refetchOrder } = useGiteSingleOrderQuery(id);
   console.log("order details data", orderData);
@@ -312,6 +312,12 @@ const OrderDetails = ({ id }: { id: string }) => {
               </span>
             </div>
             <div className="flex flex-col">
+              <span className="text-sm text-gray-600">Total Payable</span>
+              <span className="font-bold">
+                ${orderData?.data?.totalPayable?.toFixed(2) || "N/A"}
+              </span>
+            </div>
+            <div className="flex flex-col">
               <span className="text-sm text-gray-600">Open Balance</span>
               <span className="font-medium">
                 ${orderData?.data?.openBalance?.toFixed(2) || "N/A"}
@@ -550,7 +556,7 @@ const OrderDetails = ({ id }: { id: string }) => {
                   <Input
                     id="discount"
                     type="number"
-                    min="0"
+                    defaultValue="0"
                     step="0.01"
                     value={discount}
                     onChange={(e) => setDiscount(e.target.value)}

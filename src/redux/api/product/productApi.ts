@@ -1,3 +1,4 @@
+
 import { GetProductResponse, Product } from "@/types";
 import baseApi from "../baseApi";
 
@@ -7,12 +8,13 @@ export const productsApi = baseApi.injectEndpoints({
       query: (categoryId) => `/product/by-category/${categoryId}`,
       providesTags: (result, error, categoryId) => [
         { type: "Products", id: categoryId },
+        "Products", // Add a general Products tag for broader invalidation
       ],
     }),
     getProducts: builder.query<{ success: boolean; message: string; data: Product[] }, void>({
-         query: () => "/product",
-       }),
-    
+      query: () => "/product",
+      providesTags: ["Products"], // Add Products tag
+    }),
   }),
 });
 

@@ -1,6 +1,3 @@
-
-
-
 "use client";
 import Cookies from "js-cookie";
 import { useState } from "react";
@@ -41,10 +38,10 @@ import { ImFilePdf } from "react-icons/im";
 import { useGetCategoriesQuery } from "@/redux/api/category/categoryApi";
 
 export default function AllGetProducts() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isBestLoading,setIsBestLoading]=useState(false)
+  const [isBestLoading, setIsBestLoading] = useState(false);
   const itemsPerPage = 20;
   const router = useRouter();
   const { data, isLoading, isError } = useGetInventoryQuery();
@@ -52,33 +49,31 @@ export default function AllGetProducts() {
   const [updateInventory] = useUpdateInventoryMutation();
   const products: payload[] = data?.data ?? [];
   console.log("get data", products);
- const [activeFilters, setActiveFilters] = useState({
+  const [activeFilters, setActiveFilters] = useState({
     category: "",
     product: "",
     outOfStock: false,
     lowStock: false,
   });
 
+  // get category data
+  const { data: categoryData } = useGetCategoriesQuery(); // Removed unused refetch
+  const categoriesData: { _id: string; name: string }[] =
+    categoryData?.data ?? [];
 
-  // get category data 
- const { data: categoryData } = useGetCategoriesQuery(); // Removed unused refetch
-  const categoriesData: { _id: string; name: string }[] = categoryData?.data ?? [];
-
-const handleApplyFilters = (newFilters:any) => {
-
+  const handleApplyFilters = (newFilters: any) => {
     setActiveFilters(newFilters);
 
     setIsModalOpen(false); // Close the modal after applying filters
 
     setCurrentPage(1); // Reset to the first page when filters change
-
-   
-
   };
-   const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(search.toLowerCase()) ||
-      (product.categoryId?.name?.toLowerCase() ?? "").includes(search.toLowerCase());
+      (product.categoryId?.name?.toLowerCase() ?? "").includes(
+        search.toLowerCase()
+      );
 
     const matchesCategory = activeFilters.category
       ? (product.categoryId?.name || "") === activeFilters.category
@@ -92,9 +87,9 @@ const handleApplyFilters = (newFilters:any) => {
       ? (product.quantity ?? 0) === 0
       : true;
 
-   const matchesLowStock = activeFilters.lowStock
-  ? (product.quantity ?? 0) < 50 && (product.quantity ?? 0) > 0 
-  : true;
+    const matchesLowStock = activeFilters.lowStock
+      ? (product.quantity ?? 0) < 50 && (product.quantity ?? 0) > 0
+      : true;
 
     return (
       matchesSearch &&
@@ -104,12 +99,6 @@ const handleApplyFilters = (newFilters:any) => {
       matchesLowStock
     );
   });
-  // Filter products based on search
-  // const filteredProducts = products.filter((product) =>
-  //   product.name.toLowerCase().includes(search.toLowerCase()) ||
-  //   (product.categoryId?.name?.toLowerCase() ?? "").includes(search.toLowerCase())
-  // );
-
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -121,7 +110,10 @@ const handleApplyFilters = (newFilters:any) => {
   );
 
   // Calculate profit percentage dynamically
-  const calculateProfitPercentage = (purchasePrice: number, salesPrice: number) => {
+  const calculateProfitPercentage = (
+    purchasePrice: number,
+    salesPrice: number
+  ) => {
     if (purchasePrice === 0) return 0;
     const profit = salesPrice - purchasePrice;
     return ((profit / purchasePrice) * 100).toFixed(2);
@@ -145,7 +137,7 @@ const handleApplyFilters = (newFilters:any) => {
     try {
       await deleteInventory(_id).unwrap();
       setIsDeleteOpen(false);
-      toast.success(' Product deleted Successfully !')
+      toast.success(" Product deleted Successfully !");
     } catch (error) {
       console.error("Failed to delete product:", error);
       toast.error("Failed to delete product.");
@@ -180,7 +172,7 @@ const handleApplyFilters = (newFilters:any) => {
         packageDimensions: selectedProduct.packageDimensions,
       };
 
-      console.log("product update",payload)
+      console.log("product update", payload);
 
       const updatedProduct = await updateInventory(payload).unwrap();
 
@@ -191,75 +183,72 @@ const handleApplyFilters = (newFilters:any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Update failed:", error);
-      toast.error(`Failed to update: ${error?.data?.message || "Unexpected error"}`);
+      toast.error(
+        `Failed to update: ${error?.data?.message || "Unexpected error"}`
+      );
     }
   };
 
-  
   const handleDownloadExcel = async () => {
- setIsBestLoading(true)
-  try {
-    const token = Cookies?.get("token");
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_URL}/order/bulk-order-excel-empty?download=true`,{
-         headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `${token}`,
-  },
+    setIsBestLoading(true);
+    try {
+      const token = Cookies?.get("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/order/bulk-order-excel-empty?download=true`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch Excel file");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch Excel file");
+      const data = await response.arrayBuffer();
+
+      const blob = new Blob([data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+
+      link.download = `order_repo.xlsx`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(link.href);
+      setIsBestLoading(false);
+    } catch (err) {
+      console.error("Error downloading Excel file:", err);
+      setIsBestLoading(false);
     }
-
- 
-    const data = await response.arrayBuffer();
-
-   
-    const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }); 
-
-    
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    
-    
-    link.download = `order_repo.xlsx`; 
-  
-   
-    document.body.appendChild(link);
-    
-   
-    link.click(); 
-    
-   
-    document.body.removeChild(link); 
-
-    
-    URL.revokeObjectURL(link.href);
-     setIsBestLoading(false)
-  } catch (err) {
-    console.error("Error downloading Excel file:", err);
-    setIsBestLoading(false)
-  }
-};
+  };
 
   const handleDownload = async () => {
-    setIsBestLoading(true)
+    setIsBestLoading(true);
     const token = Cookies?.get("token");
-    console.log(token)
+    console.log(token);
     if (!token) {
-      console.error('Authentication token not found. Please log in.');
+      console.error("Authentication token not found. Please log in.");
       return; // Stop execution if no token
     }
     try {
       // Fetch the PDF as a binary response (arrayBuffer)
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/product/all-products-pdf`,{
-           headers: {
-          'Authorization': `${token}`, // Add the Bearer token
-          'Content-Type': 'application/json', // Good practice, though PDF download might not strictly need it
-        },
+        `${process.env.NEXT_PUBLIC_URL}/product/all-products-pdf`,
+        {
+          headers: {
+            Authorization: `${token}`, // Add the Bearer token
+            "Content-Type": "application/json", // Good practice, though PDF download might not strictly need it
+          },
         }
       );
 
@@ -285,16 +274,20 @@ const handleApplyFilters = (newFilters:any) => {
       setTimeout(() => {
         URL.revokeObjectURL(fileURL);
       }, 10);
-      setIsBestLoading(false)
+      setIsBestLoading(false);
     } catch (err) {
       console.log(err);
-       setIsBestLoading(false)
+      setIsBestLoading(false);
     }
   };
 
-
   if (isLoading) {
-    return <Loading title="All Product Loading..." message="all product fetch successfully " />;
+    return (
+      <Loading
+        title="All Product Loading..."
+        message="all product fetch successfully "
+      />
+    );
   }
 
   if (isError) {
@@ -303,8 +296,7 @@ const handleApplyFilters = (newFilters:any) => {
 
   return (
     <div className="p-4">
-
-      {isBestLoading && <BestLoding/>}
+      {isBestLoading && <BestLoding />}
       {/* Search and Controls */}
       <div className="flex justify-between items-center mb-4">
         <Input
@@ -314,7 +306,8 @@ const handleApplyFilters = (newFilters:any) => {
           onChange={(e) => setSearch(e.target.value)}
         />
         <div className="flex gap-2">
-          <Button onClick={() => setIsModalOpen(true)}
+          <Button
+            onClick={() => setIsModalOpen(true)}
             variant="outline"
             className="bg-orange-500 text-white hover:bg-orange-600"
           >
@@ -328,26 +321,46 @@ const handleApplyFilters = (newFilters:any) => {
           </Button>
           {/* Export to XL Button with icon only */}
           <Button onClick={handleDownload} className="bg-[#D9D9D9]" size="icon">
-                      <ImFilePdf className="w-5 h-5 text-black" />
-                    </Button>
-                    <Button onClick={handleDownloadExcel} className="bg-[#D9D9D9]" size="icon">
-                                <FaFileExcel className="w-5 h-5 text-black" />
-                              </Button>
-                   
+            <ImFilePdf className="w-5 h-5 text-black" />
+          </Button>
+          <Button
+            onClick={handleDownloadExcel}
+            className="bg-[#D9D9D9]"
+            size="icon"
+          >
+            <FaFileExcel className="w-5 h-5 text-black" />
+          </Button>
         </div>
       </div>
       {/* add dialog */}
- <ProductFiltersModal open={isModalOpen}
+      <ProductFiltersModal
+        open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        filterData={products} 
-        onApplyFilters={handleApplyFilters} 
-        currentFilters={activeFilters}/>
+        filterData={products}
+        onApplyFilters={handleApplyFilters}
+        currentFilters={activeFilters}
+      />
       {/* Product Table */}
       <Table className="w-full overflow-x-auto">
         <TableHeader>
           <TableRow className="bg-gray-100 text-gray-700">
-            {[, "Product Name","Category", "Qty", "Incoming Qty", "Purchase Price", "Sales Price", "Profit", "Profit %", "Competitor Price", "Action"].map((heading, index) => (
-              <TableHead key={index} className="p-2 whitespace-nowrap font-medium text-left">
+            {[
+              "Pro. Number",
+              "Product Name",
+              "Category",
+              "Qty",
+              "Incoming Qty",
+              "Purchase Price",
+              "Sales Price",
+              "Profit",
+              "Profit %",
+              "Competitor Price",
+              "Action",
+            ].map((heading, index) => (
+              <TableHead
+                key={index}
+                className="p-2 whitespace-nowrap font-medium text-left"
+              >
                 <div className="flex items-center gap-1">
                   {heading}
                   {heading !== "Action" && <ArrowUpDown className="w-3 h-3" />}
@@ -359,14 +372,14 @@ const handleApplyFilters = (newFilters:any) => {
 
         <TableBody>
           {filteredProducts?.map((product, idx) => (
+
             <TableRow key={idx} className="text-sm">
+              <TableCell>{product?.itemNumber || ""}</TableCell>
               <TableCell className="text-blue-600 underline cursor-pointer">
                 <button
-              
                   onClick={() => {
                     setSelectedProduct(product);
                     setIsUpdateOpen(true);
-                    
                   }}
                   className="cursor-pointer"
                 >
@@ -376,25 +389,36 @@ const handleApplyFilters = (newFilters:any) => {
               <TableCell>{product.categoryId?.name || ""}</TableCell>
               {/* <TableCell>{product.quantity?.toLocaleString() ?? ""}</TableCell> */}
               <TableCell>{product.quantity?.toLocaleString() ?? ""}</TableCell>
-            <TableCell>{product.incomingQuantity?.toLocaleString() ?? ""}</TableCell>
               <TableCell>
-                {product.purchasePrice ? `$${product.purchasePrice.toFixed(2)}` : ""}
+                {product.incomingQuantity?.toLocaleString() ?? ""}
+              </TableCell>
+              <TableCell>
+                {product.purchasePrice
+                  ? `$${product.purchasePrice.toFixed(2)}`
+                  : ""}
               </TableCell>
               <TableCell>
                 {product.salesPrice ? `$${product.salesPrice.toFixed(2)}` : ""}
               </TableCell>
               <TableCell>
                 {product.salesPrice && product.purchasePrice
-                  ? `$${(product.salesPrice - product.purchasePrice).toFixed(2)}`
+                  ? `$${(product.salesPrice - product.purchasePrice).toFixed(
+                      2
+                    )}`
                   : ""}
               </TableCell>
               <TableCell>
                 {product.purchasePrice && product.salesPrice
-                  ? `${calculateProfitPercentage(product.purchasePrice, product.salesPrice)}%`
+                  ? `${calculateProfitPercentage(
+                      product.purchasePrice,
+                      product.salesPrice
+                    )}%`
                   : ""}
               </TableCell>
               <TableCell>
-                {product.competitorPrice ? `$${product.competitorPrice.toFixed(2)}` : ""}
+                {product.competitorPrice
+                  ? `$${product.competitorPrice.toFixed(2)}`
+                  : ""}
               </TableCell>
               <TableCell>
                 <span className="inline-flex space-x-2">
@@ -427,33 +451,111 @@ const handleApplyFilters = (newFilters:any) => {
                       {selectedProduct && (
                         <div className="space-y-4 md:grid grid-cols-2">
                           <div>
-                            <p><strong>ID:</strong> {selectedProduct._id}</p>
-                            <p><strong>Name:</strong> {selectedProduct.name}</p>
-                            <p><strong>Category:</strong> {selectedProduct.categoryId?.name || "N/A"}</p>
-                            <p><strong>Description:</strong> {selectedProduct.description || "N/A"}</p>
-                            <p><strong>Item Number:</strong> {selectedProduct.itemNumber || "N/A"}</p>
-                            <p><strong>Barcode:</strong> {selectedProduct.barcodeString || "N/A"}</p>
-                            <p><strong>Packet Size:</strong> {selectedProduct.packetSize || "N/A"}</p>
-                            <p><strong>Weight:</strong> {selectedProduct.weight} {selectedProduct.weightUnit}</p>
-                            <p><strong>Quantity:</strong> {selectedProduct.quantity?.toLocaleString() ?? "N/A"}</p>
-                            <p><strong>Reorder Point:</strong> {selectedProduct.reorderPointOfQuantity}</p>
-                            <p><strong>Warehouse Location:</strong> {selectedProduct.warehouseLocation || "N/A"}</p>
+                            <p>
+                              <strong>ID:</strong> {selectedProduct._id}
+                            </p>
+                            <p>
+                              <strong>Name:</strong> {selectedProduct.name}
+                            </p>
+                            <p>
+                              <strong>Category:</strong>{" "}
+                              {selectedProduct.categoryId?.name || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Description:</strong>{" "}
+                              {selectedProduct.description || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Item Number:</strong>{" "}
+                              {selectedProduct.itemNumber || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Barcode:</strong>{" "}
+                              {selectedProduct.barcodeString || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Packet Size:</strong>{" "}
+                              {selectedProduct.packetSize || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Weight:</strong> {selectedProduct.weight}{" "}
+                              {selectedProduct.weightUnit}
+                            </p>
+                            <p>
+                              <strong>Quantity:</strong>{" "}
+                              {selectedProduct.quantity?.toLocaleString() ??
+                                "N/A"}
+                            </p>
+                            <p>
+                              <strong>Reorder Point:</strong>{" "}
+                              {selectedProduct.reorderPointOfQuantity}
+                            </p>
+                            <p>
+                              <strong>Warehouse Location:</strong>{" "}
+                              {selectedProduct.warehouseLocation || "N/A"}
+                            </p>
                           </div>
                           <div>
-                            <p><strong>Purchase Price:</strong> ${selectedProduct.purchasePrice?.toFixed(2) ?? "N/A"}</p>
-                            <p><strong>Sales Price:</strong> ${selectedProduct.salesPrice?.toFixed(2) ?? "N/A"}</p>
-                            <p><strong>Profit:</strong> ${(selectedProduct.salesPrice && selectedProduct.purchasePrice
-                              ? (selectedProduct.salesPrice - selectedProduct.purchasePrice).toFixed(2)
-                              : "N/A")}</p>
-                            <p><strong>Profit %:</strong> {selectedProduct.purchasePrice && selectedProduct.salesPrice
-                              ? `${calculateProfitPercentage(selectedProduct.purchasePrice, selectedProduct.salesPrice)}%`
-                              : "N/A"}</p>
-                            <p><strong>Competitor Price:</strong> ${selectedProduct.competitorPrice?.toFixed(2) ?? "N/A"}</p>
-                            <p><strong>Package Dimensions:</strong> {selectedProduct.packageDimensions?.length} x {selectedProduct.packageDimensions?.width} x {selectedProduct.packageDimensions?.height} {selectedProduct.packageDimensions?.unit}</p>
-                            <p><strong>Created At:</strong> {new Date(selectedProduct.createdAt).toLocaleString()}</p>
-                            <p><strong>Updated At:</strong> {new Date(selectedProduct.updatedAt).toLocaleString()}</p>
+                            <p>
+                              <strong>Purchase Price:</strong> $
+                              {selectedProduct.purchasePrice?.toFixed(2) ??
+                                "N/A"}
+                            </p>
+                            <p>
+                              <strong>Sales Price:</strong> $
+                              {selectedProduct.salesPrice?.toFixed(2) ?? "N/A"}
+                            </p>
+                            <p>
+                              <strong>Profit:</strong> $
+                              {selectedProduct.salesPrice &&
+                              selectedProduct.purchasePrice
+                                ? (
+                                    selectedProduct.salesPrice -
+                                    selectedProduct.purchasePrice
+                                  ).toFixed(2)
+                                : "N/A"}
+                            </p>
+                            <p>
+                              <strong>Profit %:</strong>{" "}
+                              {selectedProduct.purchasePrice &&
+                              selectedProduct.salesPrice
+                                ? `${calculateProfitPercentage(
+                                    selectedProduct.purchasePrice,
+                                    selectedProduct.salesPrice
+                                  )}%`
+                                : "N/A"}
+                            </p>
+                            <p>
+                              <strong>Competitor Price:</strong> $
+                              {selectedProduct.competitorPrice?.toFixed(2) ??
+                                "N/A"}
+                            </p>
+                            <p>
+                              <strong>Package Dimensions:</strong>{" "}
+                              {selectedProduct.packageDimensions?.length} x{" "}
+                              {selectedProduct.packageDimensions?.width} x{" "}
+                              {selectedProduct.packageDimensions?.height}{" "}
+                              {selectedProduct.packageDimensions?.unit}
+                            </p>
+                            <p>
+                              <strong>Created At:</strong>{" "}
+                              {new Date(
+                                selectedProduct.createdAt
+                              ).toLocaleString()}
+                            </p>
+                            <p>
+                              <strong>Updated At:</strong>{" "}
+                              {new Date(
+                                selectedProduct.updatedAt
+                              ).toLocaleString()}
+                            </p>
                           </div>
-                          <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>Close</Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsDetailsOpen(false)}
+                          >
+                            Close
+                          </Button>
                         </div>
                       )}
                     </DialogContent>
@@ -488,41 +590,71 @@ const handleApplyFilters = (newFilters:any) => {
                         <form onSubmit={handleUpdate} className="space-y-4">
                           <div className="min-[0px]:grid-cols-1 md:grid-cols-2 grid gap-4">
                             <div>
-                              <Label className="mb-1" htmlFor="name">Product Name</Label>
+                              <Label className="mb-1" htmlFor="name">
+                                Product Name
+                              </Label>
                               <Input
                                 id="name"
                                 value={selectedProduct.name || ""}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, name: e.target.value })}
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    name: e.target.value,
+                                  })
+                                }
                                 placeholder="Product Name"
                                 required
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="description">Description</Label>
+                              <Label className="mb-1" htmlFor="description">
+                                Description
+                              </Label>
                               <Input
                                 id="description"
                                 value={selectedProduct.description ?? ""}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, description: e.target.value })}
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    description: e.target.value,
+                                  })
+                                }
                                 placeholder="Description"
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="packetSize">Packet Size</Label>
+                              <Label className="mb-1" htmlFor="packetSize">
+                                Packet Size
+                              </Label>
                               <Input
                                 id="packetSize"
                                 value={selectedProduct.packetSize ?? ""}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, packetSize: e.target.value })}
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    packetSize: e.target.value,
+                                  })
+                                }
                                 placeholder="Packet Size"
                                 required
                               />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <Label className="mb-1" htmlFor="weight">Weight</Label>
+                                <Label className="mb-1" htmlFor="weight">
+                                  Weight
+                                </Label>
                                 <Input
                                   id="weight"
-                                  value={selectedProduct.weight?.toString() ?? "0"}
-                                  onChange={(e) => setSelectedProduct({ ...selectedProduct, weight: parseFloat(e.target.value) || 0 })}
+                                  value={
+                                    selectedProduct.weight?.toString() ?? "0"
+                                  }
+                                  onChange={(e) =>
+                                    setSelectedProduct({
+                                      ...selectedProduct,
+                                      weight: parseFloat(e.target.value) || 0,
+                                    })
+                                  }
                                   type="number"
                                   step="0.1"
                                   placeholder="Weight"
@@ -530,81 +662,135 @@ const handleApplyFilters = (newFilters:any) => {
                                 />
                               </div>
                               <div>
-                                <Label className="mb-1" htmlFor="weightUnit">Unit</Label>
+                                <Label className="mb-1" htmlFor="weightUnit">
+                                  Unit
+                                </Label>
                                 <Input
                                   id="weightUnit"
                                   value={selectedProduct.weightUnit ?? ""}
-                                  onChange={(e) => setSelectedProduct({ ...selectedProduct, weightUnit: e.target.value })}
+                                  onChange={(e) =>
+                                    setSelectedProduct({
+                                      ...selectedProduct,
+                                      weightUnit: e.target.value,
+                                    })
+                                  }
                                   placeholder="INCH/CM"
                                   required
                                 />
                               </div>
                             </div>
 
-                              <div>
-  <label className="block text-sm font-medium text-gray-700">Category *</label>
-  <select
-    name="categoryId"
-    value={
-      typeof selectedProduct?.categoryId === "object"
-        ? selectedProduct?.categoryId?._id || ""
-        : selectedProduct?.categoryId || ""
-    }
-    onChange={(e) =>
-      setSelectedProduct({
-        ...selectedProduct,
-        categoryId: {_id: e.target.value,name:selectedProduct.name}, // Update categoryId, not _id
-      })
-    }
-    className="mt-1 p-2 w-full border rounded"
-    required
-  >
-    <option value="">Select Category</option>
-    {categoriesData.map((cat) => (
-      <option key={cat._id} value={cat._id}>
-        {cat.name}
-      </option>
-    ))}
-  </select>
-</div>
                             <div>
-                              <Label className="mb-1" htmlFor="reorderPoint">Reorder Point</Label>
+                              <label className="block text-sm font-medium text-gray-700">
+                                Category *
+                              </label>
+                              <select
+                                name="categoryId"
+                                value={
+                                  typeof selectedProduct?.categoryId ===
+                                  "object"
+                                    ? selectedProduct?.categoryId?._id || ""
+                                    : selectedProduct?.categoryId || ""
+                                }
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    categoryId: {
+                                      _id: e.target.value,
+                                      name: selectedProduct.name,
+                                    }, // Update categoryId, not _id
+                                  })
+                                }
+                                className="mt-1 p-2 w-full border rounded"
+                                required
+                              >
+                                <option value="">Select Category</option>
+                                {categoriesData.map((cat) => (
+                                  <option key={cat._id} value={cat._id}>
+                                    {cat.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="mb-1" htmlFor="reorderPoint">
+                                Reorder Point
+                              </Label>
                               <Input
                                 id="reorderPoint"
-                                value={selectedProduct.reorderPointOfQuantity?.toString() ?? "0"}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, reorderPointOfQuantity: parseInt(e.target.value) || 0 })}
+                                value={
+                                  selectedProduct.reorderPointOfQuantity?.toString() ??
+                                  "0"
+                                }
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    reorderPointOfQuantity:
+                                      parseInt(e.target.value) || 0,
+                                  })
+                                }
                                 type="number"
                                 placeholder="Reorder Point"
                                 required
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="quantity">Quantity</Label>
+                              <Label className="mb-1" htmlFor="quantity">
+                                Quantity
+                              </Label>
                               <Input
                                 id="quantity"
-                                value={selectedProduct.quantity?.toString() ?? "0"}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, quantity: parseInt(e.target.value) || 0 })}
+                                value={
+                                  selectedProduct.quantity?.toString() ?? "0"
+                                }
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    quantity: parseInt(e.target.value) || 0,
+                                  })
+                                }
                                 type="number"
                                 placeholder="Quantity"
                                 required
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="warehouseLocation">Warehouse Location</Label>
+                              <Label
+                                className="mb-1"
+                                htmlFor="warehouseLocation"
+                              >
+                                Warehouse Location
+                              </Label>
                               <Input
                                 id="warehouseLocation"
                                 value={selectedProduct.warehouseLocation ?? ""}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, warehouseLocation: e.target.value })}
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    warehouseLocation: e.target.value,
+                                  })
+                                }
                                 placeholder="Warehouse Location"
                                 required
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="purchasePrice">Purchase Price</Label>
+                              <Label className="mb-1" htmlFor="purchasePrice">
+                                Purchase Price
+                              </Label>
                               <Input
                                 id="purchasePrice"
-                                value={selectedProduct.purchasePrice?.toString() ?? "0"}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, purchasePrice: parseFloat(e.target.value) || 0 })}
+                                value={
+                                  selectedProduct.purchasePrice?.toString() ??
+                                  "0"
+                                }
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    purchasePrice:
+                                      parseFloat(e.target.value) || 0,
+                                  })
+                                }
                                 type="number"
                                 step="0.01"
                                 placeholder="Purchase Price"
@@ -612,11 +798,20 @@ const handleApplyFilters = (newFilters:any) => {
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="salesPrice">Sales Price</Label>
+                              <Label className="mb-1" htmlFor="salesPrice">
+                                Sales Price
+                              </Label>
                               <Input
                                 id="salesPrice"
-                                value={selectedProduct.salesPrice?.toString() ?? "0"}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, salesPrice: parseFloat(e.target.value) || 0 })}
+                                value={
+                                  selectedProduct.salesPrice?.toString() ?? "0"
+                                }
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    salesPrice: parseFloat(e.target.value) || 0,
+                                  })
+                                }
                                 type="number"
                                 step="0.01"
                                 placeholder="Sales Price"
@@ -624,11 +819,22 @@ const handleApplyFilters = (newFilters:any) => {
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="competitorPrice">Competitor Price</Label>
+                              <Label className="mb-1" htmlFor="competitorPrice">
+                                Competitor Price
+                              </Label>
                               <Input
                                 id="competitorPrice"
-                                value={selectedProduct.competitorPrice?.toString() ?? "0"}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, competitorPrice: parseFloat(e.target.value) || 0 })}
+                                value={
+                                  selectedProduct.competitorPrice?.toString() ??
+                                  "0"
+                                }
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    competitorPrice:
+                                      parseFloat(e.target.value) || 0,
+                                  })
+                                }
                                 type="number"
                                 step="0.01"
                                 placeholder="Competitor Price"
@@ -636,25 +842,42 @@ const handleApplyFilters = (newFilters:any) => {
                               />
                             </div>
                             <div>
-                              <Label className="mb-1" htmlFor="barcode">Barcode</Label>
+                              <Label className="mb-1" htmlFor="barcode">
+                                Barcode
+                              </Label>
                               <Input
                                 id="barcode"
                                 value={selectedProduct.barcodeString ?? ""}
-                                onChange={(e) => setSelectedProduct({ ...selectedProduct, barcodeString: e.target.value })}
+                                onChange={(e) =>
+                                  setSelectedProduct({
+                                    ...selectedProduct,
+                                    barcodeString: e.target.value,
+                                  })
+                                }
                                 placeholder="Barcode"
                                 required
                               />
                             </div>
                             <div className="grid grid-cols-4 gap-4">
                               <div>
-                                <Label className="mb-1" htmlFor="length">Length</Label>
+                                <Label className="mb-1" htmlFor="length">
+                                  Length
+                                </Label>
                                 <Input
                                   id="length"
-                                  value={selectedProduct.packageDimensions?.length?.toString() ?? "0"}
-                                  onChange={(e) => setSelectedProduct({
-                                    ...selectedProduct,
-                                    packageDimensions: { ...selectedProduct.packageDimensions, length: parseFloat(e.target.value) || 0 }
-                                  })}
+                                  value={
+                                    selectedProduct.packageDimensions?.length?.toString() ??
+                                    "0"
+                                  }
+                                  onChange={(e) =>
+                                    setSelectedProduct({
+                                      ...selectedProduct,
+                                      packageDimensions: {
+                                        ...selectedProduct.packageDimensions,
+                                        length: parseFloat(e.target.value) || 0,
+                                      },
+                                    })
+                                  }
                                   type="number"
                                   step="0.1"
                                   placeholder="Length"
@@ -662,14 +885,24 @@ const handleApplyFilters = (newFilters:any) => {
                                 />
                               </div>
                               <div>
-                                <Label className="mb-1" htmlFor="width">Width</Label>
+                                <Label className="mb-1" htmlFor="width">
+                                  Width
+                                </Label>
                                 <Input
                                   id="width"
-                                  value={selectedProduct.packageDimensions?.width?.toString() ?? "0"}
-                                  onChange={(e) => setSelectedProduct({
-                                    ...selectedProduct,
-                                    packageDimensions: { ...selectedProduct.packageDimensions, width: parseFloat(e.target.value) || 0 }
-                                  })}
+                                  value={
+                                    selectedProduct.packageDimensions?.width?.toString() ??
+                                    "0"
+                                  }
+                                  onChange={(e) =>
+                                    setSelectedProduct({
+                                      ...selectedProduct,
+                                      packageDimensions: {
+                                        ...selectedProduct.packageDimensions,
+                                        width: parseFloat(e.target.value) || 0,
+                                      },
+                                    })
+                                  }
                                   type="number"
                                   step="0.1"
                                   placeholder="Width"
@@ -677,14 +910,24 @@ const handleApplyFilters = (newFilters:any) => {
                                 />
                               </div>
                               <div>
-                                <Label className="mb-1" htmlFor="height">Height</Label>
+                                <Label className="mb-1" htmlFor="height">
+                                  Height
+                                </Label>
                                 <Input
                                   id="height"
-                                  value={selectedProduct.packageDimensions?.height?.toString() ?? "0"}
-                                  onChange={(e) => setSelectedProduct({
-                                    ...selectedProduct,
-                                    packageDimensions: { ...selectedProduct.packageDimensions, height: parseFloat(e.target.value) || 0 }
-                                  })}
+                                  value={
+                                    selectedProduct.packageDimensions?.height?.toString() ??
+                                    "0"
+                                  }
+                                  onChange={(e) =>
+                                    setSelectedProduct({
+                                      ...selectedProduct,
+                                      packageDimensions: {
+                                        ...selectedProduct.packageDimensions,
+                                        height: parseFloat(e.target.value) || 0,
+                                      },
+                                    })
+                                  }
                                   type="number"
                                   step="0.1"
                                   placeholder="Height"
@@ -692,33 +935,44 @@ const handleApplyFilters = (newFilters:any) => {
                                 />
                               </div>
                               <div>
-                          <Label className="mb-1" htmlFor="unit">Unit</Label>
-                          <select
-                            id="unit"
-                            value={selectedProduct.packageDimensions?.unit ?? ""}
-                            onChange={(e) =>
-                              setSelectedProduct({
-                                ...selectedProduct,
-                                packageDimensions: {
-                                  ...selectedProduct.packageDimensions,
-                                  unit: e.target.value,
-                                },
-                              })
-                            }
-                            required
-                            className="w-full border rounded-md px-2 h-9  py-1"
-                          >
-                            <option value="" disabled>Select Unit</option>
-                            <option value="CM">CM</option>
-                            <option value="INCH">INCH</option>
-                          </select>
-                        </div>
-
+                                <Label className="mb-1" htmlFor="unit">
+                                  Unit
+                                </Label>
+                                <select
+                                  id="unit"
+                                  value={
+                                    selectedProduct.packageDimensions?.unit ??
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    setSelectedProduct({
+                                      ...selectedProduct,
+                                      packageDimensions: {
+                                        ...selectedProduct.packageDimensions,
+                                        unit: e.target.value,
+                                      },
+                                    })
+                                  }
+                                  required
+                                  className="w-full border rounded-md px-2 h-9  py-1"
+                                >
+                                  <option value="" disabled>
+                                    Select Unit
+                                  </option>
+                                  <option value="CM">CM</option>
+                                  <option value="INCH">INCH</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
                           <div className="flex justify-end gap-2">
                             <Button type="submit">Save Changes</Button>
-                            <Button variant="outline" onClick={() => setIsUpdateOpen(false)}>Cancel</Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsUpdateOpen(false)}
+                            >
+                              Cancel
+                            </Button>
                           </div>
                         </form>
                       )}
@@ -761,9 +1015,17 @@ const handleApplyFilters = (newFilters:any) => {
                       </DialogHeader>
                       {selectedProduct && (
                         <div className="space-y-4">
-                          <p>Are you sure you want to delete <strong>{selectedProduct.name}</strong>?</p>
+                          <p>
+                            Are you sure you want to delete{" "}
+                            <strong>{selectedProduct.name}</strong>?
+                          </p>
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsDeleteOpen(false)}
+                            >
+                              Cancel
+                            </Button>
                             <Button
                               variant="destructive"
                               onClick={() => handleDelete(selectedProduct._id)}
@@ -783,46 +1045,6 @@ const handleApplyFilters = (newFilters:any) => {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
-      <div className="flex justify-between items-center text-sm text-gray-600 mt-4">
-        <p>
-          Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-          {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of{" "}
-          {filteredProducts.length}
-        </p>
-        <div className="flex items-center gap-1">
-          <button
-            className="px-2 py-1 border rounded"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            «
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              className={`px-2 py-1 border rounded ${page === currentPage ? "bg-gray-200" : ""}`}
-              onClick={() => setCurrentPage(page)}
-            >
-              {page}
-            </button>
-          ))}
-          <button
-            className="px-2 py-1 border rounded"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            »
-          </button>
-          <select
-            className="ml-2 border px-2 py-1 rounded"
-            value={itemsPerPage}
-            onChange={(e) => setCurrentPage(1)} // Reset to page 1 on change
-          >
-            <option value="20">20</option>
-          </select>
-        </div>
-      </div>
     </div>
   );
 }

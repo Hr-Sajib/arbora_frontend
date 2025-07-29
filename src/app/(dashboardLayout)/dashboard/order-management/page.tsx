@@ -59,6 +59,7 @@ interface Order {
   };
   shippingCharge?: string;
   paymentDueDate: string;
+  totalPayable: number;
   orderAmount: number;
   orderStatus: string;
   paymentAmountReceived: number;
@@ -426,49 +427,6 @@ export default function OrderManagement(): React.ReactElement {
     return <div>Error loading orders</div>;
   }
 
-  const handleDownloadExcel = async () => {
-    setIsBestLoading(true);
-    try {
-      const token = Cookies?.get("token");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/order/bulk-order-excel-empty?download=true`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch Excel file");
-      }
-
-      const data = await response.arrayBuffer();
-
-      const blob = new Blob([data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-
-      link.download = `order_repo.xlsx`;
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(link.href);
-      setIsBestLoading(false);
-    } catch (err) {
-      console.error("Error downloading Excel file:", err);
-      setIsBestLoading(false);
-    }
-  };
-
   return (
     <div>
       {/* Section 1: Orders Overview */}
@@ -666,13 +624,14 @@ export default function OrderManagement(): React.ReactElement {
               <TableHead className="min-w-[150px]">Store Name</TableHead>
               <TableHead className="min-w-[120px]">Payment Due</TableHead>
               <TableHead className="min-w-[120px]">Order Amount</TableHead>
+              <TableHead className="min-w-[130px]">Shipping Charge</TableHead>
+              <TableHead className="min-w-[130px] font-bold">Total Payable</TableHead>
               <TableHead className="min-w-[120px]">Order Status</TableHead>
               <TableHead className="min-w-[140px]">Payment Received</TableHead>
               <TableHead className="min-w-[100px]">Discount</TableHead>
               <TableHead className="min-w-[120px]">Open Balance</TableHead>
               <TableHead className="min-w-[100px]">Profit</TableHead>
               <TableHead className="min-w-[100px]">Profit %</TableHead>
-              <TableHead className="min-w-[130px]">Shapping Charge</TableHead>
               <TableHead className="min-w-[130px]">Payment Status</TableHead>
               <TableHead className="min-w-[150px] sticky right-0 bg-gray-50">
                 Action
@@ -728,6 +687,16 @@ export default function OrderManagement(): React.ReactElement {
                     ${order.orderAmount.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm">
+                    <span className="px-2 py-1 rounded-full text-xs capitalize font-medium">
+                      ${order.shippingCharge}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    <span className="px-2 py-1 rounded-full text-xs capitalize font-medium">
+                      ${order.totalPayable}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs uppercase font-medium">
                       {order.orderStatus}
                     </span>
@@ -754,11 +723,6 @@ export default function OrderManagement(): React.ReactElement {
                   </TableCell>
                   <TableCell className="text-sm font-medium">
                     {order.profitPercentage.toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <span className="px-2 py-1 rounded-full text-xs capitalize font-medium">
-                      ${order.shippingCharge}
-                    </span>
                   </TableCell>
                   <TableCell className="text-sm">
                     <span

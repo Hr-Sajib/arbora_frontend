@@ -154,6 +154,7 @@ export interface ContainerProduct {
   itemNumber: string;
   quantity: number;
   perCaseCost: number;
+  perCaseShippingCost?: string;
   packetSize: string;
   purchasePrice: number;
   salesPrice: number;

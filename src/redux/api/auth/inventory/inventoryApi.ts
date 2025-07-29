@@ -1,19 +1,13 @@
 
-
-
 import baseApi from "../../baseApi";
 
-
-
-
-// Full Inventory Type (as received from backend)
 export interface payload {
   _id: string;
   name: string;
   description?: string;
   itemNumber: string;
   barcodeString: string;
-  categoryId?: { _id: string; name: string }; // Full object from DB
+  categoryId?: { _id: string; name: string };
   packetSize: string;
   weight: number;
   weightUnit: string;
@@ -43,7 +37,6 @@ export type PacketSizeResponse = {
   data: string[];
 };
 
-// ✅ New payload type for update mutation
 export type UpdateInventoryPayload = {
   _id: string;
   name: string;
@@ -51,7 +44,7 @@ export type UpdateInventoryPayload = {
   packetSize: string;
   weight: number;
   weightUnit: string;
-  categoryId: string; // ✅ only string ID
+  categoryId: string;
   reorderPointOfQuantity: number;
   quantity: number;
   warehouseLocation: string;
@@ -80,7 +73,7 @@ export interface CreateInventoryPayload {
   barcodeString: string;
   warehouseLocation: string;
   packetSize: string;
-  categoryId: string; // ✅ just string here
+  categoryId: string;
   packageDimensions: {
     length: number;
     width: number;
@@ -89,7 +82,6 @@ export interface CreateInventoryPayload {
   };
   isDeleted: boolean;
 }
-
 
 interface InventoryResponse {
   success: boolean;
@@ -101,42 +93,35 @@ const inventoryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getInventory: builder.query<InventoryResponse, void>({
       query: () => "/product",
-      providesTags: ["Inventory"],
+      providesTags: ["Inventory", "Products"], // Add Products tag
     }),
-
     addInventory: builder.mutation<payload, CreateInventoryPayload>({
       query: (inventory) => ({
         url: "/product",
         method: "POST",
         body: inventory,
       }),
-      invalidatesTags: ["Inventory"],
+      invalidatesTags: ["Inventory", "Products"], // Add Products tag
     }),
-
-    // ✅ Updated mutation uses the new UpdateInventoryPayload
     updateInventory: builder.mutation<payload, UpdateInventoryPayload>({
       query: ({ _id, ...patch }) => ({
         url: `/product/${_id}`,
         method: "PATCH",
         body: patch,
       }),
-      invalidatesTags: ["Inventory"],
+      invalidatesTags: ["Inventory", "Products"], // Add Products tag
     }),
-
     deleteInventory: builder.mutation<{ success: boolean }, string>({
       query: (_id) => ({
         url: `/product/${_id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Inventory"],
+      invalidatesTags: ["Inventory", "Products"], // Add Products tag
     }),
-
-    // get all pack size 
     getPackSize: builder.query<PacketSizeResponse, void>({
       query: () => "/product/packet-sizes",
-      providesTags: ["Inventory"],
+      providesTags: ["Inventory"], // No Products tag needed here
     }),
-
   }),
 });
 
@@ -145,8 +130,7 @@ export const {
   useAddInventoryMutation,
   useUpdateInventoryMutation,
   useDeleteInventoryMutation,
-  useGetPackSizeQuery
+  useGetPackSizeQuery,
 } = inventoryApi;
 
 export default inventoryApi;
-

@@ -1,10 +1,7 @@
-
-
 import baseApi from "../../baseApi";
 
 // Product inside a container
 export interface ContainerProduct {
-  
   _id: string;
   category: string;
   itemNumber: string;
@@ -67,17 +64,17 @@ const containerApi = baseApi.injectEndpoints({
         method: "POST",
         body: container,
       }),
-      invalidatesTags: ["Containers"],
+      invalidatesTags: ["Containers", "Products", "Inventory"], // Invalidate Products and Inventory
     }),
 
-    // ✅ PUT update container
+    // ✅ PATCH update container
     updateContainer: builder.mutation<Container, { id: string; data: Partial<Container> }>({
       query: ({ id, data }) => ({
         url: `/container/${id}`,
         method: "PATCH",
         body: data,
       }),
-      invalidatesTags: ["Containers"],
+      invalidatesTags: ["Containers", "Products", "Inventory"], // Invalidate Products and Inventory
     }),
 
     // ✅ DELETE container
@@ -89,17 +86,14 @@ const containerApi = baseApi.injectEndpoints({
       invalidatesTags: ["Containers"],
     }),
 
-    // Updated importContainerExcel with typed response
+    // ✅ POST import container from Excel
     importContainerExcel: builder.mutation<ContainerApiResponse, FormData>({
-      query: (formData) => {
-        console.log("Sending import request with FormData:", Object.fromEntries(formData)); // Debug
-        return {
-          url: "/container/xl",
-          method: "POST",
-          body: formData,
-        };
-      },
-      invalidatesTags: ["Containers"],
+      query: (formData) => ({
+        url: "/container/xl",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["Containers", "Products", "Inventory"], // Invalidate Products and Inventory
     }),
   }),
 });

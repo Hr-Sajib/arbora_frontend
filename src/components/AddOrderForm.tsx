@@ -30,6 +30,8 @@ import { Input } from "./ui/input";
 import { ScrollArea } from "./ui/scroll-area";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { useDispatch } from "react-redux";
+import inventoryApi from "@/redux/api/auth/inventory/inventoryApi";
 
 // Updated interfaces to include payment due date
 interface Product {
@@ -95,7 +97,11 @@ interface AddOrderPageProps {
   onAddSuccess: () => void;
 }
 
+
 const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSuccess }) => {  
+
+  const { data: productsData, refetch: refetchProducts } = useGetProductsQuery(); // Add refetch
+
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [orderDate, setOrderDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -248,6 +254,8 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
     })),
   });
 
+  const dispatch = useDispatch(); // Add dispatch
+
   const handlePlaceOrder = async () => {
     if (!selectedClient || orderItems.length === 0) {
       alert("Please select a client and add items");
@@ -262,9 +270,12 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
       setSearchTerm("");
       setSelectedClient("");
       setOrderDate(new Date().toISOString().split("T")[0]);
-      setShippingDate(new Date().toISOString().split("T")[0]); // Reset shipping date
+      setShippingDate(new Date().toISOString().split("T")[0]);
       setPaymentDueDate("");
       alert("Order placed successfully!");
+      refetchProducts(); // Keep for local consistency
+      // Invalidate both Products and Inventory tags globally
+      dispatch(inventoryApi.util.invalidateTags(["Products", "Inventory"]));
       onAddSuccess();
     } catch (err: any) {
       console.error("Order creation error:", err);
