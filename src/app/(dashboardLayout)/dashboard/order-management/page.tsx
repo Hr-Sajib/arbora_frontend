@@ -710,15 +710,15 @@ export default function OrderManagement(): React.ReactElement {
                   <TableCell className="text-sm font-medium">
                     <span
                       className={
-                        order.openBalance < 0
-                          ? "text-red-600"
+                        order.openBalance > 0
+                          ? "text-red-700"
                           : "text-green-600"
                       }
                     >
                       ${order.openBalance.toFixed(2)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-green-600">
+                  <TableCell className="text-sm font-medium text-green-700">
                     ${order.profitAmount.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm font-medium">

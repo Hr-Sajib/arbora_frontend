@@ -96,8 +96,10 @@ interface CustomerOrder {
   date: string;
   paymentDueDate: string;
   orderAmount: number;
+  shippingCharge: number;
   orderStatus: string;
   paymentAmountReceived: number;
+  totalPayable: number;
   discountGiven: number;
   openBalance: number;
   profitAmount: number;

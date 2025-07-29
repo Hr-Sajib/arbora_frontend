@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -51,8 +52,7 @@ interface AssignedSalesPerson {
 export interface FollowUpActivity {
   activity: string;
   activityDate: string; // ISO date string (e.g., "2025-07-10")
-  activityMedium: string; // Updated to include "call"
-  // Optional, 24-char ObjectId if required by API
+  activityMedium: string;
 }
 
 interface FormData {
@@ -71,7 +71,7 @@ interface FormData {
   leadSource: string;
   note: string;
   status: string;
-  assignedSalesPerson: AssignedSalesPerson | null;
+  assignedSalesPerson: AssignedSalesPerson | string | null; // Allow string for _id
   followUpActivities: FollowUpActivity[];
   quotedList: QuotedListItem[];
   competitorStatement: string;
@@ -83,14 +83,11 @@ export default function UpdateProspectPage({
   prospectId: string;
 }): React.ReactElement {
   // --- ALL HOOKS MUST BE CALLED HERE, UNCONDITIONALLY AND AT THE TOP LEVEL ---
-
-  // RTK Query Hooks
   const {
     data: prospectResponse,
     isLoading,
     error,
   } = useGetProspectByIdQuery(prospectId);
-  console.log("ddddddddddddd", prospectResponse);
   const {
     data: inventoryData,
     isLoading: isInventoryLoading,
@@ -100,14 +97,10 @@ export default function UpdateProspectPage({
     data: salesUsersResponse,
     error: salesError,
     isLoading: isUsersLoading,
-  } = useGetSalesUsersQuery(); // Always call the hook
+  } = useGetSalesUsersQuery();
   const [updateProspect, { isLoading: isSaving }] = useUpdateProspectMutation();
-
-  // React Router Hook
   const router = useRouter();
-
-  // React State Hooks
-  const [formData, setFormData] = useState<FormData | null>(null); // Initialize with null
+  const [formData, setFormData] = useState<FormData | null>(null);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -134,70 +127,56 @@ export default function UpdateProspectPage({
     setRole(role);
   }, []);
 
-  // Use ref to track whether to skip sales users query
   const skipSalesUsersRef = useRef(role !== "admin");
   useEffect(() => {
-    skipSalesUsersRef.current = role !== "admin"; // Update ref when role changes
+    skipSalesUsersRef.current = role !== "admin";
   }, [role]);
 
   // --- useEffects to handle data loading and initialization ---
   useEffect(() => {
     if (prospectResponse?.data && !formData) {
-      // Ensure productObjId is a string when initializing from fetched data
       const processedQuotedList = prospectResponse.data.quotedList.map(
         (item) => ({
           ...item,
           productObjId:
             typeof item.productObjId === "object" && item.productObjId !== null
-              ? (item.productObjId as any)._id // Cast to any to access _id if it's an object
-              : item.productObjId, // Otherwise, use it as is (should be string)
+              ? (item.productObjId as any)._id
+              : item.productObjId,
         })
       );
 
       setFormData({
         ...prospectResponse.data,
         quotedList: processedQuotedList,
+        assignedSalesPerson: prospectResponse.data.assignedSalesPerson?._id || null, // Use _id string
       });
-      console.log("Initial formData set:", {
-        ...prospectResponse.data,
-        quotedList: processedQuotedList,
-      }); // Debug log
     }
   }, [prospectResponse, formData]);
 
   useEffect(() => {
     if (isInventoryError) {
-      console.error("Error fetching inventory:", isInventoryError);
       toast.error("Failed to load inventory.");
     }
   }, [isInventoryError]);
 
   useEffect(() => {
     if (salesError && !skipSalesUsersRef.current) {
-      // Only show error toast if query was not skipped (admin role)
-      console.error("Error fetching sales users:", salesError);
-      console.trace("Sales users error stack trace"); // Debug to trace redirect source
       toast.error("Failed to load sales users.");
     }
   }, [salesError]);
 
   // --- Conditional Rendering for Loading/Error States ---
   if (isLoading || !formData) {
-    // Check formData as well, as it's initialized async
     return <div className="min-h-screen p-4 text-center">Loading...</div>;
   }
   if (error || !prospectResponse?.data) {
-    console.error("Error loading prospect:", error); // Log the actual error for debugging
+    const errorMessage = error ? (error as any).message : "Unknown error";
     return (
       <div className="min-h-screen p-4 text-center">
-        Error loading prospect:{" "}
-        {error ? (error as any).message : "Unknown error"}
+        Error loading prospect: {errorMessage}
       </div>
     );
   }
-
-  // At this point, formData is guaranteed to be available and initialized
-  // We can use `formData` directly in the JSX and handlers
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -205,7 +184,11 @@ export default function UpdateProspectPage({
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev!, [name]: value })); // Using non-null assertion as formData is guaranteed
+    if (name === "assignedSalesPerson") {
+      setFormData((prev) => ({ ...prev!, [name]: value || null }));
+    } else {
+      setFormData((prev) => ({ ...prev!, [name]: value }));
+    }
     setValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
@@ -238,7 +221,6 @@ export default function UpdateProspectPage({
         }
       })
       .catch((uploadError) => {
-        console.error("Image upload failed:", uploadError);
         toast.error("Image upload failed.");
       });
   };
@@ -247,21 +229,19 @@ export default function UpdateProspectPage({
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
   ) => {
     const { name, value } = e.target;
-    // Only update if the selected input is 'productObjId' and inventory data exists
     if (name === "productObjId" && inventoryData?.data) {
       const selectedProduct = inventoryData.data.find(
         (p: Product) => p._id === value
       );
       if (selectedProduct) {
         setNewQuote({
-          productObjId: selectedProduct._id, // Ensure this is the ID string
+          productObjId: selectedProduct._id || "",
           itemNumber: selectedProduct.itemNumber,
           itemName: selectedProduct.name,
           price: selectedProduct.salesPrice,
-          packetSize: selectedProduct.packetSize || "", // Duplicating for robustness or if `packSize` refers to something else
+          packetSize: selectedProduct.packetSize || "",
         });
       } else {
-        // Clear newQuote fields if no product is selected (e.g., "Select Product" is chosen)
         setNewQuote({
           productObjId: "",
           itemNumber: "",
@@ -271,8 +251,10 @@ export default function UpdateProspectPage({
         });
       }
     } else {
-      // For other inputs within the quote modal (like price if it were editable)
-      setNewQuote((prev) => ({ ...prev, [name]: value }));
+      setNewQuote((prev) => ({
+        ...prev,
+        [name]: name === "price" ? Number(value) : value,
+      }));
     }
   };
 
@@ -346,7 +328,6 @@ export default function UpdateProspectPage({
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!formData) {
-      // Defensive check, though should be covered by initial renders
       errors.general = "Form data not loaded.";
       setValidationErrors(errors);
       return false;
@@ -354,12 +335,9 @@ export default function UpdateProspectPage({
 
     if (!formData.storeName.trim())
       errors.storeName = "Store name is required.";
-    // Regex for phone numbers: Allows 3 digits - 4 digits (e.g., 555-0198)
     if (!formData.storePhone.match(/^\(\d{3}\)\d{3}-\d{4}$/)) {
       errors.storePhone = "Phone number must be in format (XXX)XXX-XXXX.";
     }
-
-    // Regex for email
     if (
       !formData.storePersonEmail.match(
         /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/
@@ -368,7 +346,6 @@ export default function UpdateProspectPage({
       errors.storePersonEmail = "Invalid email format.";
     if (!formData.storePersonName.trim())
       errors.storePersonName = "Customer name is required.";
-    // Regex for cell phone numbers: Allows 3 digits - 4 digits (e.g., 555-0234)
     if (!formData.storePersonPhone.match(/^\(\d{3}\)\d{3}-\d{4}$/))
       errors.storePersonPhone = "Phone number must be in format (XXX)XXX-XXXX.";
     if (!formData.shippingAddress.trim())
@@ -377,15 +354,12 @@ export default function UpdateProspectPage({
       errors.shippingCity = "Shipping city is required.";
     if (!formData.shippingState.trim())
       errors.shippingState = "Shipping state is required.";
-    // Regex for 5-digit zipcode
     if (!formData.shippingZipcode.match(/^\d{5}$/))
       errors.shippingZipcode = "Zipcode must be 5 digits.";
+    if (role === "admin" && !formData.assignedSalesPerson)
+      errors.assignedSalesPerson = "Sales person is required for admins.";
 
-    // Validate quotedList - ensure all required fields are present if list is not empty
-    if (formData.quotedList.length === 0) {
-      // Consider if an empty quotedList is valid or required
-      // errors.quotedList = "At least one quoted item is required.";
-    } else {
+    if (formData.quotedList.length > 0) {
       formData.quotedList.forEach((item, index) => {
         if (
           !item.productObjId ||
@@ -404,65 +378,68 @@ export default function UpdateProspectPage({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!formData) {
-      toast.error("Form data is not loaded. Please try again.");
-      return;
-    }
+  if (!formData) {
+    toast.error("Form data is not loaded. Please try again.");
+    return;
+  }
 
-    if (!validateForm()) {
-      toast.error("Please fix the validation errors.");
-      return;
-    }
+  if (!validateForm()) {
+    toast.error("Please fix the validation errors.");
+    return;
+  }
 
-    const token = Cookies.get("token");
-    if (!token) {
-      toast.error("Authentication token missing. Please log in.");
-      router.push("/login"); // Redirect to login
-      return;
-    }
+  const token = Cookies.get("token");
+  if (!token) {
+    toast.error("Authentication token missing. Please log in.");
+    router.push("/login");
+    return;
+  }
 
-    // Filter out items without a productObjId for submission
-    // This is a safety measure if some items somehow got added without a productObjId
-    const validQuotedList = formData.quotedList.filter(
-      (item) => item.productObjId
-    );
+  const validQuotedList = formData.quotedList.filter(
+    (item) => item.productObjId
+  );
 
-    const payload: Partial<FormData> = {
-      _id: formData._id,
-      storeName: formData.storeName,
-      storePhone: formData.storePhone,
-      storePersonEmail: formData.storePersonEmail,
-      storePersonName: formData.storePersonName,
-      storePersonPhone: formData.storePersonPhone,
-      salesTaxId: formData.salesTaxId || undefined, // Allow optional
-      shippingAddress: formData.shippingAddress,
-      shippingState: formData.shippingState,
-      shippingZipcode: formData.shippingZipcode,
-      shippingCity: formData.shippingCity,
-      miscellaneousDocImage: formData.miscellaneousDocImage || undefined, // Allow optional
-      leadSource: formData.leadSource,
-      note: formData.note || undefined, // Allow optional
-      status: formData.status,
-      assignedSalesPerson: formData.assignedSalesPerson || undefined, // Allow optional, though required in validation
-      followUpActivities: formData.followUpActivities,
-      quotedList: validQuotedList, // Use filtered list
-      competitorStatement: formData.competitorStatement,
-    };
 
-    try {
-      await updateProspect(payload as any).unwrap(); // Cast to any if type mismatch persists, though ideally fix types
-      toast.success("Prospect updated successfully");
-      router.push("/dashboard/prospact");
-    } catch (err: any) {
-      console.error("Failed to update prospect:", err);
-      const errorMessage =
-        err?.data?.message || err?.message || "Unknown error";
-      toast.error(`Update failed: ${errorMessage}`);
-    }
+  const payload: Partial<FormData> = {
+    _id: formData._id!, // Assert _id is string
+    storeName: formData.storeName,
+    storePhone: formData.storePhone,
+    storePersonEmail: formData.storePersonEmail,
+    storePersonName: formData.storePersonName,
+    storePersonPhone: formData.storePersonPhone,
+    salesTaxId: formData.salesTaxId || undefined,
+    shippingAddress: formData.shippingAddress,
+    shippingState: formData.shippingState,
+    shippingZipcode: formData.shippingZipcode,
+    shippingCity: formData.shippingCity,
+    miscellaneousDocImage: formData.miscellaneousDocImage || undefined,
+    leadSource: formData.leadSource,
+    note: formData.note || undefined,
+    status: formData.status,
+    assignedSalesPerson: formData.assignedSalesPerson || undefined,
+    followUpActivities: formData.followUpActivities,
+    quotedList: validQuotedList,
+    competitorStatement: formData.competitorStatement,
   };
+
+  // Debugging: Log payload
+  console.log("Submitting payload:", JSON.stringify(payload, null, 2)); // Temporary debug
+
+  try {
+    const result = await updateProspect(payload as { _id: string } & Partial<FormData>).unwrap(); // Type assertion to satisfy updateProspect
+    console.log("Update response:", result); // Temporary debug
+    toast.success("Prospect updated successfully");
+    router.push("/dashboard/prospact");
+  } catch (err: any) {
+    console.error("Update error:", err); // Temporary debug
+    const errorMessage =
+      err?.data?.message || err?.message || "Unknown error";
+    toast.error(`Update failed: ${errorMessage}`);
+  }
+};
 
   const handleCancel = () => {
     router.push("/dashboard/prospact");
@@ -523,7 +500,7 @@ export default function UpdateProspectPage({
               type="tel"
               value={formData.storePhone}
               onChange={handleInputChange}
-              placeholder="Enter store phone number (e.g., 555-0198)"
+              placeholder="Enter store phone number (e.g., (555)123-4567)"
               className="w-full"
             />
             {validationErrors.storePhone && (
@@ -559,7 +536,7 @@ export default function UpdateProspectPage({
               type="tel"
               value={formData.storePersonPhone}
               onChange={handleInputChange}
-              placeholder="Enter cell phone number (e.g., 555-0234)"
+              placeholder="Enter cell phone number (e.g., (555)123-4567)"
               className="w-full"
             />
             {validationErrors.storePersonPhone && (
@@ -821,7 +798,7 @@ export default function UpdateProspectPage({
           <select
             id="assignedSalesPerson"
             name="assignedSalesPerson"
-            value={formData.assignedSalesPerson?._id || ""}
+            value={formData.assignedSalesPerson || ""}
             onChange={handleInputChange}
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             disabled={role !== "admin"}
@@ -877,7 +854,6 @@ export default function UpdateProspectPage({
                   ))}
                 </tbody>
               </table>
-              {/* Display specific quoted list errors if any */}
               {Object.keys(validationErrors)
                 .filter((key) => key.startsWith("quotedList["))
                 .map((key) => (
@@ -898,50 +874,48 @@ export default function UpdateProspectPage({
             </Button>
           </div>
         </div>
-        {formData.followUpActivities.length > 0 && (
-          <div className="overflow-x-auto border-2 p-10 rounded-2xl border-blue-500">
-            <Label className="block my-2">Follow Up Activities</Label>
-            <table className="w-full text-sm text-left text-gray-500 mt-2">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2">Activity</th>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Medium</th>
-                  <th className="px-4 py-2">Action</th>
+        <div className="overflow-x-auto border-2 p-10 rounded-2xl border-blue-500">
+          <Label className="block my-2">Follow Up Activities</Label>
+          <table className="w-full text-sm text-left text-gray-500 mt-2">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th className="px-4 py-2">Activity</th>
+                <th className="px-4 py-2">Date</th>
+                <th className="px-4 py-2">Medium</th>
+                <th className="px-4 py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {formData.followUpActivities.map((activity, index) => (
+                <tr key={index} className="bg-white border-b">
+                  <td className="px-4 py-2">{activity.activity}</td>
+                  <td className="px-4 py-2">{activity.activityDate}</td>
+                  <td className="px-4 py-2">{activity.activityMedium}</td>
+                  <td className="px-4 py-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteFollowUp(index)}
+                      className="text-white"
+                    >
+                      Delete
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {formData.followUpActivities.map((activity, index) => (
-                  <tr key={index} className="bg-white border-b">
-                    <td className="px-4 py-2">{activity.activity}</td>
-                    <td className="px-4 py-2">{activity.activityDate}</td>
-                    <td className="px-4 py-2">{activity.activityMedium}</td>
-                    <td className="px-4 py-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteFollowUp(index)}
-                        className="text-white"
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
 
-            <div className="flex justify-end mt-5">
-              <Button
-                type="button"
-                onClick={() => setIsFollowUpModalOpen(true)}
-                className="bg-blue-600 text-white"
-              >
-                Add Follow Up Activity
-              </Button>
-            </div>
+          <div className="flex justify-end mt-5">
+            <Button
+              type="button"
+              onClick={() => setIsFollowUpModalOpen(true)}
+              className="bg-blue-600 text-white"
+            >
+              Add Follow Up Activity
+            </Button>
           </div>
-        )}
+        </div>
 
         <div className="flex justify-end space-x-4 pt-6">
           <Button
@@ -994,7 +968,7 @@ export default function UpdateProspectPage({
                   value={newQuote.itemNumber}
                   placeholder="Item Number"
                   className="w-full"
-                  disabled // This field is auto-filled
+                  disabled
                 />
               </div>
               <div className="space-y-2">
@@ -1005,7 +979,7 @@ export default function UpdateProspectPage({
                   value={newQuote.itemName}
                   placeholder="Item Name"
                   className="w-full"
-                  disabled // This field is auto-filled
+                  disabled
                 />
               </div>
               <div className="space-y-2">
@@ -1015,7 +989,7 @@ export default function UpdateProspectPage({
                   name="price"
                   type="number"
                   value={newQuote.price}
-                  onChange={handleQuoteInputChange} // Ensure price changes are handled
+                  onChange={handleQuoteInputChange}
                   placeholder="Enter price"
                   className="w-full"
                 />
@@ -1028,7 +1002,7 @@ export default function UpdateProspectPage({
                   value={newQuote.packetSize}
                   placeholder="Packet Size"
                   className="w-full"
-                  disabled // This field is auto-filled
+                  disabled
                 />
               </div>
             </div>

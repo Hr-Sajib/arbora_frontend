@@ -342,6 +342,9 @@ export default function Payment({
                       Payment Due Date
                     </TableHead>
                     <TableHead className="font-medium">Order Amount</TableHead>
+                    <TableHead className="font-medium">Shipping</TableHead>
+                    <TableHead className="font-medium">Payable Amount</TableHead>
+                    <TableHead className="font-medium">Paid</TableHead>
                     <TableHead className="font-medium flex items-center gap-1">
                       Open Balance
                       <ArrowUpDown className="h-4 w-4" />
@@ -366,6 +369,9 @@ export default function Payment({
                       <TableCell>{order.date}</TableCell>
                       <TableCell>{order.paymentDueDate}</TableCell>
                       <TableCell>${order.orderAmount.toFixed(2)}</TableCell>
+                      <TableCell>${order.shippingCharge.toFixed(2)}</TableCell>
+                      <TableCell className="font-semibold">${order.totalPayable.toFixed(2)}</TableCell>
+                      <TableCell>${order.paymentAmountReceived.toFixed(2)}</TableCell>
                       <TableCell className="text-red-800 font-semibold">
                         ${order.openBalance.toFixed(2)}
                       </TableCell>

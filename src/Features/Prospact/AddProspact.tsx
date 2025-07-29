@@ -396,8 +396,8 @@ export default function AddProspact(): React.ReactElement {
               required
             />
           </div>
-          <div className="space-y-2 relative top-3">
-            <Label htmlFor="storePhone">Store Phone Number *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="storePhone">Store Phone Number <span className="text-lg font-bold text-red-700">*</span></Label>
             <Input
               id="storePhone"
               name="storePhone"
@@ -427,15 +427,15 @@ export default function AddProspact(): React.ReactElement {
                 handleInputChange(syntheticEvent);
               }}
               required
-              placeholder="(123)456-7890"
-              className="w-full"
+              placeholder="(111)111-1111"
+              className="w-full "
             />
           </div>
           
         </div>
         <div className="space-y-2">
                     <Label htmlFor="storePersonPhone">
-                      Authorized Person Number (For Order) *
+                      Authorized Person Number (For Order) <span className="font-bold text-lg text-red-700">*</span>
                     </Label>
                     <Input
                       id="storePersonPhone"
@@ -510,7 +510,7 @@ export default function AddProspact(): React.ReactElement {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 mt-3">
               <Label htmlFor="shippingCity">
                 Shipping City{" "}
                 <strong className="text-red-600 text-xl">*</strong>
@@ -526,7 +526,7 @@ export default function AddProspact(): React.ReactElement {
               />
             </div>
             <div className="space-y-2 mt-3">
-              <Label htmlFor="shippingState">Shipping State *</Label>
+              <Label htmlFor="shippingState">Shipping State<span className="text-red-600 text-xl">*</span></Label>
               <select
                 id="shippingState"
                 name="shippingState"
@@ -588,7 +588,7 @@ export default function AddProspact(): React.ReactElement {
                 <option value="WY">Wyoming</option>
               </select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 mt-3">
               <Label htmlFor="shippingZipcode">
                 Shipping Zipcode{" "}
                 <strong className="text-red-600 text-xl">*</strong>

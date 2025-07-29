@@ -1,3 +1,4 @@
+
 "use client";
 import Cookies from "js-cookie";
 import { usePathname, useRouter } from "next/navigation";
@@ -22,10 +23,10 @@ export default function ProspectDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [modalContent, setModalContent] = useState<{ title: string; data: string } | null>(null);
   const [newSalespersonId, setNewSalespersonId] = useState("");
+  const [role, setRole] = useState(""); // Moved role state up for clarity
 
   const itemsPerPage = 10;
   const router = useRouter();
@@ -46,6 +47,17 @@ export default function ProspectDetails() {
   const [updateProspect, { isLoading: isUpdating }] = useUpdateProspectMutation();
   const [deleteProspect, { isLoading: isDeleting }] = useDeleteProspectMutation();
   const [isConverting, setIsConverting] = useState(false);
+
+  // Moved useEffect before early returns
+  useEffect(() => {
+    const cookies = document.cookie.split("; ");
+    const roleCookie = cookies.find((cookie) => cookie.startsWith("role="));
+    if (roleCookie) {
+      const value = roleCookie.split("=")[1];
+      setRole(value);
+    }
+  }, []);
+
   if (isLoading) return <div className="min-h-screen p-4 text-center"><Loading /></div>;
   if (error) return <div className="min-h-screen p-4 text-center">Error loading prospects</div>;
 
@@ -149,27 +161,6 @@ export default function ProspectDetails() {
     }
   };
 
-  const pathname = usePathname();
-  const role = Cookies.get("role")?.toLowerCase();
-  const isAdmin = role === "admin";
-  const token = Cookies.get("token");
-
-  let isRole = "";
-  console.log("is admin role check", role);
-
-  let email = "admin@gmail.com";
-  let username = "Daval";
-  if (token) {
-    try {
-      const decodedToken = jwtDecode<DecodedToken>(token);
-      email = decodedToken.email;
-      username = email.split("@")[0] || "User";
-      isRole = decodedToken.role;
-    } catch (error) {
-      console.error("Failed to decode token:", error);
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-white p-4 sm:p-6 lg:p-8">
       <div className="mx-auto">
@@ -187,14 +178,12 @@ export default function ProspectDetails() {
                 className="w-full sm:w-64 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-            {isRole === "admin" && (
               <button
-                className="bg-red-600 text-white px-4 py-2 cursor-pointer rounded-lg hover:bg-red-700 transition duration-200"
+                className="bg-green-700 text-white px-4 py-2 cursor-pointer rounded-lg hover:bg-green-600 transition duration-200"
                 onClick={() => router.push("/dashboard/add-prospact")}
               >
                 + Add Prospect
               </button>
-            )}
           </div>
         </div>
 
@@ -249,7 +238,7 @@ export default function ProspectDetails() {
                   <td className="p-3 text-gray-800">
                     <button
                       onClick={() => handleClickSendEmail(prospect._id)}
-                      className="bg-blue-500 text-white px-2 py-1 ml-1 rounded-lg hover:bg-blue-600 transition duration-200"
+                      className="bg-gradient-to-r from-green-700 to-green-950 text-white px-2 py-1 ml-1 rounded-lg hover:bg-blue-600 transition duration-200"
                     >
                       Sent Quote
                     </button>
@@ -283,20 +272,26 @@ export default function ProspectDetails() {
                   <td className="p-3">
                     <button
                       onClick={() => handleConvertProspect(prospect._id)}
-                      className="bg-green-500 text-white px-2 py-1 rounded-lg hover:bg-green-600 transition duration-200"
+                      className="bg-green-700 text-white px-2 py-1 rounded-lg hover:bg-green-600 transition duration-200"
                       disabled={isConverting}
                     >
                       {isConverting ? "Converting..." : "Convert"}
                     </button>
                   </td>
                   <td className="p-3 flex space-x-6 items-center">
+                    {
+                      role == "admin" ?
                     <button
-                      className="bg-blue-500 text-white px-2 py-1 ml-1 rounded-lg hover:bg-blue-600 transition duration-200"
+                      className="bg-blue-900 text-white px-2 py-1 ml-1 rounded-lg hover:bg-blue-600 transition duration-200"
                       onClick={() => openUpdateModal(prospect)}
                       disabled={isUpdating}
                     >
                       Assign Salesperson
                     </button>
+                    : 
+                    null
+                    }
+
                     <Link href={`/dashboard/update-prospact/${prospect._id}`} className="flex items-center gap-2 w-full">
                       <button
                         className="text-black border px-2 py-1 rounded-lg cursor-pointer transition duration-200"

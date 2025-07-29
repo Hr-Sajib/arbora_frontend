@@ -57,7 +57,7 @@ const CustomerDetailsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 border-b-2 border-gray-200 pb-2">
-          Customer Details - <span className="text-green-600">{customer.storeName}</span>
+          Customer Details - <span className="text-green-700">{customer.storeName}</span>
         </h1>
 
         {/* Main Info Section */}
@@ -173,7 +173,7 @@ const CustomerDetailsPage: React.FC = () => {
               </p>
               <button
                 onClick={handleSendEmail}
-                className="bg-green-600 px-3 py-1 text-lg font-bold text-white rounded-md hover:bg-green-700 transition duration-300"
+                className="bg-green-700 px-3 py-1 text-lg font-bold text-white rounded-md hover:bg-green-700 transition duration-300"
                 disabled={isSending}
               >
                 {isSending ? "Sending..." : "Send Email?"}
@@ -195,11 +195,11 @@ const CustomerDetailsPage: React.FC = () => {
                     <th className="p-3 whitespace-nowrap">PO #</th>
                     <th className="p-3 whitespace-nowrap">Date</th>
                     <th className="p-3 whitespace-nowrap">Due Date</th>
-                    <th className="p-3 whitespace-nowrap">Amount</th>
-                    <th className="p-3 whitespace-nowrap">Status</th>
+                    <th className="p-3 whitespace-nowrap">Order Amount</th>
+                    <th className="p-3 whitespace-nowrap">Shipping</th>
+                    <th className="p-3 whitespace-nowrap">Total Payable</th>
                     <th className="p-3 whitespace-nowrap">Paid</th>
-                    <th className="p-3 whitespace-nowrap">Discount</th>
-                    <th className="p-3 whitespace-nowrap">Balance</th>
+                    <th className="p-3 whitespace-nowrap">Open Balance</th>
                     <th className="p-3 whitespace-nowrap">Profit</th>
                     <th className="p-3 whitespace-nowrap">Profit %</th>
                     <th className="p-3 whitespace-nowrap">Payment Status</th>
@@ -216,9 +216,9 @@ const CustomerDetailsPage: React.FC = () => {
                       <td className="p-3 whitespace-nowrap text-gray-700">{format(new Date(order.date), "yyyy-MM-dd")}</td>
                       <td className="p-3 whitespace-nowrap text-gray-700">{order.paymentDueDate ? format(new Date(order.paymentDueDate), "yyyy-MM-dd") : "N/A"}</td>
                       <td className="p-3 whitespace-nowrap text-gray-700">${order.orderAmount.toFixed(2)}</td>
-                      <td className="p-3 whitespace-nowrap text-gray-700">{order.orderStatus}</td>
-                      <td className="p-3 whitespace-nowrap text-gray-700">${order.paymentAmountReceived.toFixed(2)}</td>
-                      <td className="p-3 whitespace-nowrap text-gray-700">${order.discountGiven.toFixed(2)}</td>
+                      <td className="p-3 whitespace-nowrap text-gray-700">${order.shippingCharge.toFixed(2)}</td>
+                      <td className="p-3 whitespace-nowrap text-gray-700 font-semibold">${order?.totalPayable.toFixed(2)}</td>
+                      <td className="p-3 whitespace-nowrap text-gray-700 ">${order.paymentAmountReceived.toFixed(2)}</td>
                       <td className="p-3 whitespace-nowrap text-gray-700">${order.openBalance.toFixed(2)}</td>
                       <td className="p-3 whitespace-nowrap text-gray-700">${order.profitAmount.toFixed(2)}</td>
                       <td className="p-3 whitespace-nowrap text-gray-700">{order.profitPercentage.toFixed(2)}%</td>

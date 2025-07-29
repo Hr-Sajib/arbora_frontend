@@ -25,15 +25,14 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    if (role && !allowedRoles.includes(role)) {
-      if (role === "salesuser" && !isProspactRoute) {
-        router.push("/dashboard/prospact");
-        router.push("/dashboard/add-prospact");
-      } else {
-        router.push("/");
-      }
-      return;
-    }
+    // if (role && !allowedRoles.includes(role)) {
+    //   if (role === "salesuser" && !isProspactRoute) {
+    //     router.push("/dashboard/prospact");
+    //   } else {
+    //     router.push("/");
+    //   }
+    //   return;
+    // }
 
     setIsAllowed(true);
   }, [token, role, router, pathname]);
