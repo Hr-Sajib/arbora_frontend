@@ -357,24 +357,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               <p className="text-red-500 text-sm">{fieldErrors.storeName}</p>
             )}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="storeName">Customer Full Name <span className="text-red-700">*</span></Label>
-            <Input
-              id="storeName"
-              name="storeName"
-              value={formData.storeName}
-              onChange={handleInputChange}
-              required
-              placeholder="Enter customer full name"
-              className="w-full"
-            />
-            {fieldErrors.storeName && (
-              <p className="text-red-500 text-sm">
-                {fieldErrors.storeName}
-              </p>
-            )}
-          </div>
         </div>
 
         {/* Phone Numbers */}
