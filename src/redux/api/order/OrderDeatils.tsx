@@ -636,14 +636,14 @@ const OrderDetails = ({ id }: { id: string }) => {
                   <TableCell>
                     $
                     {(
-                      item?.productId?.salesPrice * item.quantity -
-                      item?.productId?.purchasePrice * item.quantity
+                      (item?.productId?.salesPrice * item.quantity -
+                      item?.productId?.purchasePrice * item.quantity) - item?.discount
                     )?.toFixed(2) || "N/A"}
                   </TableCell>
                   <TableCell>
                     {(
-                      ((item?.productId?.salesPrice * item.quantity -
-                        item?.productId?.purchasePrice * item.quantity) /
+                      (((item?.productId?.salesPrice * item.quantity -
+                        item?.productId?.purchasePrice * item.quantity)-item?.discount) /
                         (item?.productId?.purchasePrice * item.quantity)) *
                       100
                     )?.toFixed(2) || "N/A"}
