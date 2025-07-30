@@ -585,9 +585,7 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
                             <div className="font-semibold">{product.name}</div>
 
                             <div className="text-xs my-2">
-                              <span>
-                                Available Quantity {product.quantity}
-                              </span>
+                              <span>Available Quantity {product.quantity}</span>
                             </div>
                           </div>
                           <div className="text-sm font-semibold">
@@ -750,15 +748,21 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
             <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={
-                !selectedClient || orderItems.length === 0 || isOrderSubmitting
-              }
-              onClick={handleUpdateOrder}
-            >
-              {isOrderSubmitting ? "Updating..." : "Update Order"}
-            </Button>
+            {order.orderStatus == "completed" ? (
+              <div className="bg-red-100 flex items-center px-2 rounded-md">Cant update completed orders 🚫</div>
+            ) : (
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={
+                  !selectedClient ||
+                  orderItems.length === 0 ||
+                  isOrderSubmitting
+                }
+                onClick={handleUpdateOrder}
+              >
+                {isOrderSubmitting ? "Updating..." : "Update Order"}
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
