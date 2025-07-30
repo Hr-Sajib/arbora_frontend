@@ -191,7 +191,9 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
   const [isOrderInitialized, setIsOrderInitialized] = useState(false);
   const [orderStatus, setOrderStatus] = useState<
     "verified" | "completed" | "cancelled"
-  >(order?.orderStatus as "verified" | "completed" | "cancelled" || "verified"); // Default to "verified" if not set
+  >(
+    (order?.orderStatus as "verified" | "completed" | "cancelled") || "verified"
+  ); // Default to "verified" if not set
   const router = useRouter();
 
   // API hooks
@@ -581,8 +583,11 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-semibold">{product.name}</div>
-                            <div className="text-xs text-muted">
-                              SKU: {product.itemNumber}
+
+                            <div className="text-xs my-2">
+                              <span>
+                                Available Quantity {product.quantity}
+                              </span>
                             </div>
                           </div>
                           <div className="text-sm font-semibold">

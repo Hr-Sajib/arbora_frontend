@@ -428,15 +428,12 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-semibold">{product.name}</div>
-                            <div className="text-xs text-muted">
-                              SKU: {product.itemNumber}
-                            </div>
-                            <div className="text-xs">
-                              Category:{" "}
-                              <span className="font-medium text-blue-600">
+                            <div className="mb-2">{product.name}</div>
+                            <div className="text-xs  font-medium">
+                              Category -{" "}
+                              <span>
                                 {productCategory}
-                              </span>
+                              </span> <span>| Available Quantity {product.quantity}</span>
                             </div>
                           </div>
                           <div className="text-sm font-semibold">

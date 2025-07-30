@@ -18,7 +18,6 @@ interface ProductSegmentResponse {
   data: ProductSegment[];
 }
 
-// Updated payload interface to match your component needs
 interface UpdateOrderPayload {
   id: string; // MongoDB _id as string
   date?: string;
@@ -41,8 +40,7 @@ const orderManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getOrders: builder.query({
       query: () => "/order",
-      
-      providesTags: ["Orders"],
+      providesTags: ["Orders"], // Already present, kept for clarity
     }),
     addOrder: builder.mutation<any, any>({
       query: (order) => ({
@@ -50,47 +48,44 @@ const orderManagementApi = baseApi.injectEndpoints({
         method: "POST",
         body: order,
       }),
-      invalidatesTags: ["Orders"],
+      invalidatesTags: ["Orders"], // Already present, kept for clarity
     }),
     giteSingleOrder: builder.query({
       query: (id) => `/order/${id}`,
+      providesTags: (result, error, id) => [{ type: "Orders", id }], // Add specific tag for single order
     }),
-    // updateOrder: builder.mutation<Order, Partial<Order> & { id: number }>({
-    //   query: ({ id, ...patch }) => ({
-    //     url: `/order/${id}`,
-    //     method: "PUT",
-        
     updateOrder: builder.mutation<any, UpdateOrderPayload>({
       query: ({ id, ...patch }) => ({
-        url: `/order/${id}`, // Changed to singular to match your backend
+        url: `/order/${id}`,
         method: "PATCH",
         body: patch,
       }),
-      invalidatesTags: ["Orders"],
+      invalidatesTags: (result, error, { id }) => [
+        "Orders",
+        { type: "Orders", id }, // Invalidate both list and specific order
+      ],
     }),
     deleteOrder: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({
         url: `/order/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Orders"],
+      invalidatesTags: ["Orders"], // Already present, kept for clarity
     }),
     getProductSegments: builder.query<ProductSegmentResponse, void>({
       query: () => "/order/getProductSegmentation",
       providesTags: ["ProductSegments"],
     }),
-     getPaymentHistory: builder.query({
+    getPaymentHistory: builder.query({
       query: (id) => `/payment/${id}/customersPayments`,
     }),
-      insertPayment: builder.mutation<any, any>({
+    insertPayment: builder.mutation<any, any>({
       query: (order) => ({
         url: "/payment",
         method: "POST",
         body: order,
-      }),
-      invalidatesTags: ["Orders"],
+      })
     }),
-  
   }),
 });
 
@@ -102,7 +97,7 @@ export const {
   useGetProductSegmentsQuery,
   useGiteSingleOrderQuery,
   useGetPaymentHistoryQuery,
-  useInsertPaymentMutation
+  useInsertPaymentMutation,
 } = orderManagementApi;
 
 export default orderManagementApi;
