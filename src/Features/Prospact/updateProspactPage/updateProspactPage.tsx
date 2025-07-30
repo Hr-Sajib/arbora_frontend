@@ -378,68 +378,67 @@ export default function UpdateProspectPage({
     return Object.keys(errors).length === 0;
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (!formData) {
-    toast.error("Form data is not loaded. Please try again.");
-    return;
-  }
+    if (!formData) {
+      toast.error("Form data is not loaded. Please try again.");
+      return;
+    }
 
-  if (!validateForm()) {
-    toast.error("Please fix the validation errors.");
-    return;
-  }
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors.");
+      return;
+    }
 
-  const token = Cookies.get("token");
-  if (!token) {
-    toast.error("Authentication token missing. Please log in.");
-    router.push("/login");
-    return;
-  }
+    const token = Cookies.get("token");
+    if (!token) {
+      toast.error("Authentication token missing. Please log in.");
+      router.push("/login");
+      return;
+    }
 
-  const validQuotedList = formData.quotedList.filter(
-    (item) => item.productObjId
-  );
+    const validQuotedList = formData.quotedList.filter(
+      (item) => item.productObjId
+    );
 
+    const payload: Partial<FormData> = {
+      _id: formData._id!, // Assert _id is string
+      storeName: formData.storeName,
+      storePhone: formData.storePhone,
+      storePersonEmail: formData.storePersonEmail,
+      storePersonName: formData.storePersonName,
+      storePersonPhone: formData.storePersonPhone,
+      salesTaxId: formData.salesTaxId || undefined,
+      shippingAddress: formData.shippingAddress,
+      shippingState: formData.shippingState,
+      shippingZipcode: formData.shippingZipcode,
+      shippingCity: formData.shippingCity,
+      miscellaneousDocImage: formData.miscellaneousDocImage || undefined,
+      leadSource: formData.leadSource,
+      note: formData.note || undefined,
+      status: formData.status,
+      assignedSalesPerson: formData.assignedSalesPerson || undefined,
+      followUpActivities: formData.followUpActivities,
+      quotedList: validQuotedList,
+      competitorStatement: formData.competitorStatement,
+    };
 
-  const payload: Partial<FormData> = {
-    _id: formData._id!, // Assert _id is string
-    storeName: formData.storeName,
-    storePhone: formData.storePhone,
-    storePersonEmail: formData.storePersonEmail,
-    storePersonName: formData.storePersonName,
-    storePersonPhone: formData.storePersonPhone,
-    salesTaxId: formData.salesTaxId || undefined,
-    shippingAddress: formData.shippingAddress,
-    shippingState: formData.shippingState,
-    shippingZipcode: formData.shippingZipcode,
-    shippingCity: formData.shippingCity,
-    miscellaneousDocImage: formData.miscellaneousDocImage || undefined,
-    leadSource: formData.leadSource,
-    note: formData.note || undefined,
-    status: formData.status,
-    assignedSalesPerson: formData.assignedSalesPerson || undefined,
-    followUpActivities: formData.followUpActivities,
-    quotedList: validQuotedList,
-    competitorStatement: formData.competitorStatement,
+    // Debugging: Log payload
+    console.log("Submitting payload:", JSON.stringify(payload, null, 2)); // Temporary debug
+
+    try {
+      const result = await updateProspect(payload as { _id: string } & Partial<FormData>).unwrap(); // Type assertion to satisfy updateProspect
+      console.log("Update response:", result); // Temporary debug
+      toast.success("Prospect updated successfully");
+      router.push("/dashboard/prospact");
+    } catch (err: any) {
+      console.error("Update error:", err); // Temporary debug
+      const errorMessage =
+        err?.data?.message || err?.message || "Unknown error";
+      toast.error(`Update failed: ${errorMessage}`);
+    }
   };
-
-  // Debugging: Log payload
-  console.log("Submitting payload:", JSON.stringify(payload, null, 2)); // Temporary debug
-
-  try {
-    const result = await updateProspect(payload as { _id: string } & Partial<FormData>).unwrap(); // Type assertion to satisfy updateProspect
-    console.log("Update response:", result); // Temporary debug
-    toast.success("Prospect updated successfully");
-    router.push("/dashboard/prospact");
-  } catch (err: any) {
-    console.error("Update error:", err); // Temporary debug
-    const errorMessage =
-      err?.data?.message || err?.message || "Unknown error";
-    toast.error(`Update failed: ${errorMessage}`);
-  }
-};
 
   const handleCancel = () => {
     router.push("/dashboard/prospact");
@@ -798,7 +797,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <select
             id="assignedSalesPerson"
             name="assignedSalesPerson"
-            value={formData.assignedSalesPerson || ""}
+            value={typeof formData.assignedSalesPerson === "object" && formData.assignedSalesPerson !== null ? formData.assignedSalesPerson._id : formData.assignedSalesPerson || ""}
             onChange={handleInputChange}
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             disabled={role !== "admin"}

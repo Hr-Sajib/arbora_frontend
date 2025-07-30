@@ -14,8 +14,6 @@ interface FormData {
   storePersonName: string;
   storePhone: string;
   storePersonPhone: string;
-  storeAuthorizedPersonName: string;
-  storeAuthorizedPersonNumber: string;
   storePersonEmail: string;
   billingAddress: string;
   billingCity: string;
@@ -58,8 +56,6 @@ export default function AddCustomer(): React.ReactElement {
     storePersonName: "",
     storePhone: "",
     storePersonPhone: "",
-    storeAuthorizedPersonName: "",
-    storeAuthorizedPersonNumber: "",
     storePersonEmail: "",
     billingAddress: "",
     billingCity: "",
@@ -102,8 +98,6 @@ export default function AddCustomer(): React.ReactElement {
     "storePersonName",
     "storePhone",
     "storePersonPhone",
-    "storeAuthorizedPersonName",
-    "storeAuthorizedPersonNumber",
     "storePersonEmail",
     "billingAddress",
     "billingCity",
@@ -276,8 +270,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       storePersonEmail: formData.storePersonEmail,
       storePersonName: formData.storePersonName,
       storePersonPhone: formData.storePersonPhone.replace(/\D/g, ""),
-      storeAuthorizedPersonName: formData.storeAuthorizedPersonName,
-      storeAuthorizedPersonNumber: formData.storeAuthorizedPersonNumber.replace(/\D/g, ""),
       billingAddress: formData.billingAddress,
       billingCity: formData.billingCity,
       billingState: formData.billingState,
@@ -351,7 +343,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="storeName">Store Name *</Label>
+            <Label htmlFor="storeName">Store Name <span className="text-red-700">*</span></Label>
             <Input
               id="storeName"
               name="storeName"
@@ -367,19 +359,19 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="storePersonName">Customer Full Name *</Label>
+            <Label htmlFor="storeName">Customer Full Name <span className="text-red-700">*</span></Label>
             <Input
-              id="storePersonName"
-              name="storePersonName"
-              value={formData.storePersonName}
+              id="storeName"
+              name="storeName"
+              value={formData.storeName}
               onChange={handleInputChange}
               required
               placeholder="Enter customer full name"
               className="w-full"
             />
-            {fieldErrors.storePersonName && (
+            {fieldErrors.storeName && (
               <p className="text-red-500 text-sm">
-                {fieldErrors.storePersonName}
+                {fieldErrors.storeName}
               </p>
             )}
           </div>
@@ -388,7 +380,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Phone Numbers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="storePhone">Store Phone Number *</Label>
+            <Label htmlFor="storePhone">Store Phone Number <span className="text-red-700">*</span></Label>
             <Input
               id="storePhone"
               name="storePhone"
@@ -430,28 +422,28 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Authorized Person */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="storeAuthorizedPersonName">
-              Store Authorized Person Name (For Order) *
+            <Label htmlFor="storePersonName">
+              Store Authorized Person Name (For Order) <span className="text-red-700">*</span>
             </Label>
             <Input
-              id="storeAuthorizedPersonName"
-              name="storeAuthorizedPersonName"
-              value={formData.storeAuthorizedPersonName}
+              id="storePersonName"
+              name="storePersonName"
+              value={formData.storePersonName}
               onChange={handleInputChange}
               required
               placeholder="Enter authorized person name"
               className="w-full"
             />
-            {fieldErrors.storeAuthorizedPersonName && (
+            {fieldErrors.storePersonName && (
               <p className="text-red-500 text-sm">
-                {fieldErrors.storeAuthorizedPersonName}
+                {fieldErrors.storePersonName}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="storePersonPhone">
-              Authorized Person Number (For Order) *
+              Authorized Person Number (For Order) <span className="text-red-700">*</span>
             </Label>
             <Input
               id="storePersonPhone"
@@ -490,7 +482,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {/* Email Address */}
         <div className="space-y-2">
-          <Label htmlFor="storePersonEmail">Email Address *</Label>
+          <Label htmlFor="storePersonEmail">Email Address <span className="text-red-700">*</span></Label>
           <Input
             id="storePersonEmail"
             name="storePersonEmail"
@@ -511,7 +503,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Billing Address */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="billingAddress">Billing Address *</Label>
+            <Label htmlFor="billingAddress">Billing Address <span className="text-red-700">*</span></Label>
             <textarea
               id="billingAddress"
               name="billingAddress"
@@ -531,7 +523,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="billingCity">Billing City *</Label>
+              <Label htmlFor="billingCity">Billing City <span className="text-red-700">*</span></Label>
               <Input
                 id="billingCity"
                 name="billingCity"
@@ -549,7 +541,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="billingState">Billing State *</Label>
+              <Label htmlFor="billingState">Billing State <span className="text-red-700">*</span></Label>
               <select
                 id="billingState"
                 name="billingState"
@@ -618,7 +610,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="billingZipcode">Billing Zipcode *</Label>
+              <Label htmlFor="billingZipcode">Billing Zipcode <span className="text-red-700">*</span></Label>
               <Input
                 id="billingZipcode"
                 name="billingZipcode"
@@ -658,7 +650,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Shipping Address */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="shippingAddress">Shipping Address *</Label>
+            <Label htmlFor="shippingAddress">Shipping Address <span className="text-red-700">*</span></Label>
             <textarea
               id="shippingAddress"
               name="shippingAddress"
@@ -679,7 +671,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="shippingCity">Shipping City *</Label>
+              <Label htmlFor="shippingCity">Shipping City <span className="text-red-700">*</span></Label>
               <Input
                 id="shippingCity"
                 name="shippingCity"
@@ -698,7 +690,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="shippingState">Shipping State *</Label>
+              <Label htmlFor="shippingState">Shipping State <span className="text-red-700">*</span></Label>
               <select
                 id="shippingState"
                 name="shippingState"
