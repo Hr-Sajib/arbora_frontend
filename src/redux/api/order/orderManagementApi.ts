@@ -70,7 +70,7 @@ const orderManagementApi = baseApi.injectEndpoints({
         url: `/order/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Orders"], // Already present, kept for clarity
+      invalidatesTags: ["Orders", "Products"], // Updated to include "Products" tag
     }),
     getProductSegments: builder.query<ProductSegmentResponse, void>({
       query: () => "/order/getProductSegmentation",
