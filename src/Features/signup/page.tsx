@@ -43,7 +43,6 @@ const UserSignup: React.FC = () => {
         password,
         role: "salesUser",
       }).unwrap();
-      console.log("Signup response:", signupResult);
 
       if (signupResult.success) {
         // Step 2: Redirect to dashboard after successful creation
@@ -51,16 +50,16 @@ const UserSignup: React.FC = () => {
         router.push("/dashboard/dashboard");
       }
     } catch (error) {
-      console.error("Signup failed:", error);
+      console.error("Creating user failed:", error);
       const errorData = (error as ApiError)?.data || {};
       console.log("Error details:", errorData); // Log full error data for debugging
       const errorMessage = errorData.message || "Unknown error";
       if (errorMessage === "No authorization token available. Please configure a valid admin token." || errorMessage === "No authorization token provided") {
         alert(
-          "Signup failed: A valid admin token is required. Please configure it in the .env file or contact support."
+          "Creation failed: A valid admin token is required. Please login as admin!"
         );
       } else {
-        alert("Signup failed: " + errorMessage);
+        alert("Creation failed: " + errorMessage);
       }
       // Clear cookies on failure
       Cookies.remove("token");
@@ -73,7 +72,7 @@ const UserSignup: React.FC = () => {
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: `url('/dashboardIcons/login.jpg')` }}
     >
-      <div className="p-12 border border-gray-300 w-[400px] h-[500px] max-w-md">
+      <div className="p-12 border-y border-gray-300 rounded-2xl w-[400px] h-[500px] max-w-md">
         <div className="text-center py-12">
           <Image
             src="/dashboardIcons/logo.png"
@@ -90,7 +89,7 @@ const UserSignup: React.FC = () => {
               alt="User Icon"
               width={20}
               height={20}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2"
+              className="absolute left-2 bg-blue-400 rounded-sm top-1/2 transform -translate-y-1/2"
             />
             <input
               type="email"
@@ -108,10 +107,10 @@ const UserSignup: React.FC = () => {
               alt="Password Icon"
               width={20}
               height={20}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2"
+              className="absolute h-5 w-5 bg-red-400 rounded-sm left-2 top-1/2 transform -translate-y-1/2"
             />
             <input
-              type="password"
+              type="text"
               id="password"
               placeholder="Password"
               value={password}
@@ -125,10 +124,10 @@ const UserSignup: React.FC = () => {
             disabled={isSignupLoading}
             className="w-full mt-8 py-2 px-4 bg-white font-bold text-blue-600 rounded-md cursor-pointer "
           >
-            {isSignupLoading ? "Signing up..." : "SIGNUP"}
+            {isSignupLoading ? "Creating..." : "Create User"}
           </button>
           {isSignupError && (
-            <p className="text-red-500 text-sm text-center">Error signing up</p>
+            <p className="text-red-500 text-sm text-center">Error creating user!</p>
           )}
           
         </form>

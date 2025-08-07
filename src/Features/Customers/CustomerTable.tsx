@@ -117,8 +117,12 @@ export default function CustomerTable() {
                   {row.storeName}
                 </td>
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.storePersonName}</td>
-                <td className="p-2 whitespace-nowrap text-gray-700">{row.storePhone}</td>
-                <td className="p-2 whitespace-nowrap text-gray-700">{row.storePersonPhone}</td>
+                <td className="p-2 whitespace-nowrap text-gray-700">
+                  {`(${row.storePhone.slice(0, 3)})${row.storePhone.slice(3, 6)}-${row.storePhone.slice(6)}`}
+                </td>
+                <td className="p-2 whitespace-nowrap text-gray-700">
+                  {`(${row.storePersonPhone.slice(0, 3)})${row.storePersonPhone.slice(3, 6)}-${row.storePersonPhone.slice(6)}`}
+                </td>
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.storePersonEmail}</td>
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.openBalance || 0}</td>
                 <td className="p-2 whitespace-nowrap text-gray-700">{row.totalOrders || 0}</td>

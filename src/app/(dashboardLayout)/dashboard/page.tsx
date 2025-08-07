@@ -1,6 +1,4 @@
 
-
-
 "use client";
 
 import {
@@ -239,6 +237,15 @@ export default function AppSidebar() {
         <div className="pt-4">
           <Separator className="bg-[#242432] mb-4" />
           <SidebarMenu>
+
+            {!shouldHideButton && (
+              <Link href="/signup">
+                <Button className="bg-green-600 hover:bg-green-700 text-white w-full mb-2">
+                  Create User
+                </Button>
+              </Link>
+            )}
+
             {/* User logout */}
             <p className="text-white ml-4">{role === "admin" ? "Admin" : role === "salesuser" ? "Sales User" : "User"}</p>
             <div
@@ -260,13 +267,7 @@ export default function AppSidebar() {
                 <FaArrowRightFromBracket className="text-gray-500" />
               </span>
             </div>
-            {!shouldHideButton && (
-              <Link href="/signup">
-                <Button className="bg-green-600 hover:bg-green-700 text-white w-full mb-2">
-                  Create User
-                </Button>
-              </Link>
-            )}
+            
           </SidebarMenu>
         </div>
       </SidebarContent>

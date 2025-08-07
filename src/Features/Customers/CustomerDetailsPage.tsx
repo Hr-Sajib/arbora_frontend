@@ -60,16 +60,17 @@ const CustomerDetailsPage: React.FC = () => {
           Customer Details - <span className="text-green-700">{customer.storeName}</span>
         </h1>
 
+
         {/* Main Info Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 mb-8">
           {/* Basic Info */}
           <div className="bg-white p-4 rounded-lg shadow-md">
             <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-200 pb-2">Basic Info</h2>
             <div className="space-y-2">
-              <p className="text-gray-600"><span className="font-medium text-gray-800">Name:</span> {customer.storePersonName}</p>
-              <p className="text-gray-600"><span className="font-medium text-gray-800">Phone:</span> {customer.storePersonPhone}</p>
-              <p className="text-gray-600"><span className="font-medium text-gray-800">Email:</span> {customer.storePersonEmail}</p>
-              <p className="text-gray-600"><span className="font-medium text-gray-800">Store Phone:</span> {customer.storePhone}</p>
+              <p className="text-gray-600"><span className="font-medium text-gray-800"><span className="text-sm mr-1">👤</span> Name:</span> {customer.storePersonName}</p>
+              <p className="text-gray-600"><span className="font-medium text-gray-800"><span className="text-sm mr-1">📞</span> Phone:</span> {`(${customer.storePersonPhone.slice(0, 3)})${customer.storePersonPhone.slice(3, 6)}-${customer.storePersonPhone.slice(6)}`}</p>
+              <p className="text-gray-600"><span className="font-medium text-gray-800"><span className="text-sm mr-1">🌐</span> Email:</span> {customer.storePersonEmail}</p>
+              <p className="text-gray-600"><span className="font-medium text-gray-800"><span className="text-sm mr-1">📞</span> Store Phone:</span> {`(${customer.storePhone.slice(0, 3)})${customer.storePhone.slice(3, 6)}-${customer.storePhone.slice(6)}`}</p>
             </div>
           </div>
 
