@@ -51,6 +51,7 @@ interface Product {
 interface OrderItem {
   product: ProductDetails;
   quantity: number;
+  price: number;
   bookedQty: number;
   discount: number;
   total: number;
@@ -157,6 +158,7 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
           quantity: 1,
           bookedQty: 0,
           discount: 0,
+          price: item.price,
           total: item.price,
         },
       ]);
@@ -250,7 +252,8 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
     products: orderItems.map((item) => ({
       productId: item.product.id,
       quantity: Math.round(item.quantity),
-      discount: Math.round(item.discount),
+      price: item.product.price,
+      discount: (item.discount),
     })),
   });
 
@@ -263,6 +266,7 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
     }
 
     const payload = constructOrderPayload();
+  console.log("payload: ",payload)
 
     try {
       await addOrder(payload).unwrap();

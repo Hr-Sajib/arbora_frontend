@@ -19,7 +19,7 @@ interface ProductSegmentResponse {
 }
 
 interface UpdateOrderPayload {
-  id: string; // MongoDB _id as string
+  id: string;
   date?: string;
   invoiceNumber?: string;
   shippingCharge?: number;
@@ -40,7 +40,7 @@ const orderManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getOrders: builder.query({
       query: () => "/order",
-      providesTags: ["Orders"], // Already present, kept for clarity
+      providesTags: ["Orders"],
     }),
     addOrder: builder.mutation<any, any>({
       query: (order) => ({
@@ -48,11 +48,11 @@ const orderManagementApi = baseApi.injectEndpoints({
         method: "POST",
         body: order,
       }),
-      invalidatesTags: ["Orders"], // Already present, kept for clarity
+      invalidatesTags: ["Orders"],
     }),
     giteSingleOrder: builder.query({
       query: (id) => `/order/${id}`,
-      providesTags: (result, error, id) => [{ type: "Orders", id }], // Add specific tag for single order
+      providesTags: (result, error, id) => [{ type: "Orders", id }],
     }),
     updateOrder: builder.mutation<any, UpdateOrderPayload>({
       query: ({ id, ...patch }) => ({
@@ -60,17 +60,14 @@ const orderManagementApi = baseApi.injectEndpoints({
         method: "PATCH",
         body: patch,
       }),
-      invalidatesTags: (result, error, { id }) => [
-        "Orders",
-        { type: "Orders", id }, // Invalidate both list and specific order
-      ],
+      invalidatesTags: (result, error, { id }) => ["Orders", { type: "Orders", id }],
     }),
     deleteOrder: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({
         url: `/order/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Orders", "Products"], // Updated to include "Products" tag
+      invalidatesTags: ["Orders", "Products"],
     }),
     getProductSegments: builder.query<ProductSegmentResponse, void>({
       query: () => "/order/getProductSegmentation",
@@ -84,7 +81,8 @@ const orderManagementApi = baseApi.injectEndpoints({
         url: "/payment",
         method: "POST",
         body: order,
-      })
+      }),
+      invalidatesTags: ["Orders", { type: "Orders", id: "LIST" }],
     }),
   }),
 });

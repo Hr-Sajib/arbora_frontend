@@ -20,7 +20,6 @@ const SalesOverview = () => {
     trends: { totalSales: 0, ordersLast7Days: 0 },
   });
 
-  console.log("total product api", inventoryData);
 
   useEffect(() => {
     if (salesData?.data && inventoryData) {
@@ -32,6 +31,8 @@ const SalesOverview = () => {
         const orderDate = new Date(order.date).toISOString().split("T")[0];
         return orderDate >= last7Days;
       });
+
+      console.log("salesData: _______",salesData)
 
       // Calculate total sales and orders for last 7 days
       const totalSales = recentOrders.reduce((sum, order) => sum + (order.orderAmount || 0), 0);

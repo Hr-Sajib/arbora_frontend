@@ -3,7 +3,7 @@ const ImageGenetors = async (file: any) => {
   formData.append("image", file);
   try {
     const response = await fetch(
-      `https://api.imgbb.com/1/upload?key=98079a23527caff0b8f37443c9ab915f`, 
+      `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
       {
         method: "POST",
         body: formData,
@@ -23,3 +23,4 @@ const ImageGenetors = async (file: any) => {
 };
 
 export default ImageGenetors;
+
