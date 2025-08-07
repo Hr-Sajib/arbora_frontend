@@ -129,7 +129,7 @@ export default function Dashboard(): React.ReactElement {
     router.push(`/dashboard/update-prospact/${prospectId}`); // Navigate to update-prospact page
   };
 
-  console.log("prostpact data",data)
+  // console.log("prostpact data",data)
 const actualCustomers :Prospect[]|undefined =prospectsResponse?.data.filter(customer => customer?.status !== "converted")||[]
 
   return (

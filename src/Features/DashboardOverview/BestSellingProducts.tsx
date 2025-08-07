@@ -23,8 +23,8 @@ const BestSellingProducts: React.FC = () => {
   const { data: bestSellingData, isLoading: isBestLoading, error: bestError } = useGetBestSellingProductsQuery();
   const { data: worstSellingData, isLoading: isWorstLoading, error: worstError } = useGetWorstSellingProductsQuery();
 
-  console.log("best data ", bestSellingData);
-  console.log("worst data ", worstSellingData);
+  // console.log("best data ", bestSellingData);
+  // console.log("worst data ", worstSellingData);
 
   const products = selectedOption === 'best' ? bestSellingData?.data || [] : worstSellingData?.data || [];
 

@@ -169,7 +169,7 @@ const CustomerDetailsPage: React.FC = () => {
           {customer.openBalance ? (
             <div className="flex items-center justify-between border p-3 rounded-2xl bg-white border-red-200 gap-5">
               <p className="text-xl font-bold">
-                This customer has <span className="text-xl text-red-700 font-bold">{customer.openBalance}</span> open balance remaining
+                This customer has <span className="text-xl text-red-700 font-bold">${customer.openBalance}</span> open balance remaining
               </p>
               <button
                 onClick={handleSendEmail}

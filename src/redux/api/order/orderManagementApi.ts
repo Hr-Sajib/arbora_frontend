@@ -48,7 +48,7 @@ const orderManagementApi = baseApi.injectEndpoints({
         method: "POST",
         body: order,
       }),
-      invalidatesTags: ["Orders"],
+      invalidatesTags: ["Orders", "Dashboard", "SalesOverview", "Chart", "Products", "ProductSegments"],
     }),
     giteSingleOrder: builder.query({
       query: (id) => `/order/${id}`,
@@ -60,14 +60,22 @@ const orderManagementApi = baseApi.injectEndpoints({
         method: "PATCH",
         body: patch,
       }),
-      invalidatesTags: (result, error, { id }) => ["Orders", { type: "Orders", id }],
+      invalidatesTags: (result, error, { id }) => [
+        "Orders",
+        { type: "Orders", id },
+        "Dashboard",
+        "SalesOverview",
+        "Chart",
+        "Products",
+        "ProductSegments",
+      ],
     }),
     deleteOrder: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({
         url: `/order/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Orders", "Products"],
+      invalidatesTags: ["Orders", "Dashboard", "SalesOverview", "Chart", "Products", "ProductSegments"],
     }),
     getProductSegments: builder.query<ProductSegmentResponse, void>({
       query: () => "/order/getProductSegmentation",
@@ -82,7 +90,7 @@ const orderManagementApi = baseApi.injectEndpoints({
         method: "POST",
         body: order,
       }),
-      invalidatesTags: ["Orders", { type: "Orders", id: "LIST" }],
+      invalidatesTags: ["Orders", { type: "Orders", id: "LIST" }, "Dashboard", "SalesOverview", "Chart", "Products", "ProductSegments"],
     }),
   }),
 });

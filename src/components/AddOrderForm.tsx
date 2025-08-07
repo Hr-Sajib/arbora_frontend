@@ -215,6 +215,7 @@ const AddOrderPage: React.FC<AddOrderPageProps> = ({ setAddOrderOpen, onAddSucce
     );
   };
 
+
   // ✅ Updated: filter across all categories on search, otherwise filter by selected category
   const filteredProducts =
     searchTerm.trim() !== ""

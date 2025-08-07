@@ -31,6 +31,8 @@ const MonthlyReport: React.FC = () => {
   const formatChartData = useMemo(() => {
     if (!data?.data) return Array(12).fill(0); // default to 0 for each month
 
+    console.log("Data:_____", data.data)
+
     const raw = activeTab === "Order" ? data.data.orders : data.data.customers;
 
     const countsByMonth: Record<number, number> = {};

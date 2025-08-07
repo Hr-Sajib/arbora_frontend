@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useGetCustomersQuery } from "@/redux/api/customers/customersApi";
 import { useGetCategoriesQuery } from "@/redux/api/category/categoryApi";
-import { useGetProductsByCategoryQuery } from "@/redux/api/product/productApi";
+import { useGetProductsQuery, useGetProductsByCategoryQuery } from "@/redux/api/product/productApi";
 import { useUpdateOrderMutation } from "@/redux/api/order/orderManagementApi";
-
 import {
   Calendar,
   MapPin,
@@ -33,7 +32,6 @@ import { Button } from "./ui/button";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-// Updated interfaces to match simplified payload structure
 interface UpdateOrderPayload {
   id: string;
   date: string;
@@ -46,7 +44,7 @@ interface UpdateOrderPayload {
     quantity: number;
     discount: number;
   }>;
-  orderStatus: "verified" | "completed" | "cancelled"; // Added orderStatus
+  orderStatus: "verified" | "completed" | "cancelled";
 }
 
 interface Product {
@@ -127,7 +125,7 @@ interface Order {
   };
   paymentDueDate: string;
   orderAmount: number;
-  orderStatus: string; // Existing orderStatus from API
+  orderStatus: string;
   paymentAmountReceived: number;
   discountGiven: number;
   openBalance: number;
@@ -172,7 +170,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
 }) => {
   console.log("order for update", order);
 
-  // Simplified state management - only required fields
   const [selectedClient, setSelectedClient] = useState<string>(
     order?.storeId?._id ?? ""
   );
@@ -193,10 +190,9 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
     "verified" | "completed" | "cancelled"
   >(
     (order?.orderStatus as "verified" | "completed" | "cancelled") || "verified"
-  ); // Default to "verified" if not set
+  );
   const router = useRouter();
 
-  // API hooks
   const { data: customers } = useGetCustomersQuery();
   const clients = customers?.data ?? [];
 
@@ -210,10 +206,14 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
     });
   const products = productResponse?.data ?? [];
 
+  const { data: allProductsResponse, isLoading: allProductsLoading } = useGetProductsQuery();
+  const allProducts = allProductsResponse?.data ?? [];
+
+  console.log("P____________", products);
+
   const [updateOrder, { isLoading: isOrderSubmitting }] =
     useUpdateOrderMutation();
 
-  // Initialize order items from existing order - ENHANCED VERSION
   useEffect(() => {
     if (order?.products?.length && !isOrderInitialized) {
       console.log("Initializing order items with data:", order.products);
@@ -258,7 +258,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
     }
   }, [order?.products, isOrderInitialized]);
 
-  // Set default category
   useEffect(() => {
     if (categories?.length && !selectedCategoryId) {
       setSelectedCategoryId(categories[0]?._id ?? "");
@@ -266,7 +265,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
     }
   }, [categories, selectedCategoryId]);
 
-  // Product management functions
   const addToOrder = (product: Product) => {
     const item: ProductDetails = {
       id: product._id,
@@ -345,14 +343,24 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
     );
   };
 
-  // Filter products based on search term
-  const filteredProducts = products.filter(
-    (product: Product) =>
-      product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product?.itemNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts =
+    searchTerm.trim() !== ""
+      ? allProducts.filter(
+          (product: Product) =>
+            product?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product?.itemNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : selectedCategoryId
+      ? products.filter((product) => product.categoryId._id === selectedCategoryId)
+      : products;
+
+  console.log(
+    "Filtered products:",
+    filteredProducts.map((p) => p._id),
+    "Order items:",
+    orderItems.map((i) => i.product.id)
   );
 
-  // Calculate totals
   const calculateTotals = () => {
     const totalAmount = orderItems.reduce((acc, item) => acc + item.total, 0);
     const totalQuantity = orderItems.reduce(
@@ -367,7 +375,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
 
   const { totalAmount, totalQuantity } = calculateTotals();
 
-  // Updated payload construction to match simplified structure
   const constructOrderPayload = (): UpdateOrderPayload => ({
     id: order._id,
     date: orderDate,
@@ -379,10 +386,9 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
       quantity: Math.round(item.quantity),
       discount: Math.round(item.discount),
     })),
-    orderStatus, // Added orderStatus to payload
+    orderStatus,
   });
 
-  // Handle order update
   const handleUpdateOrder = async () => {
     if (!selectedClient || orderItems.length === 0) {
       toast.error("Please select a client and add items");
@@ -435,7 +441,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col overflow-hidden">
-        {/* Simplified form - only required fields */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -511,7 +516,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
           </div>
         </div>
 
-        {/* Search bar */}
         <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -524,7 +528,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
           </div>
         </div>
 
-        {/* Categories, Products, and Order Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="col-span-1">
             <Card className="h-full">
@@ -566,7 +569,7 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
                 <CardTitle>{selectedCategoryName || "Products"}</CardTitle>
               </CardHeader>
               <CardContent>
-                {productLoading ? (
+                {productLoading || allProductsLoading ? (
                   <p>Loading products...</p>
                 ) : filteredProducts.length === 0 ? (
                   <p>No products found.</p>
@@ -583,7 +586,6 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-semibold">{product.name}</div>
-
                             <div className="text-xs my-2">
                               <span>Available Quantity {product.quantity}</span>
                             </div>
@@ -748,8 +750,10 @@ const UpdateOrderPage: React.FC<UpdateOrderPageProps> = ({
             <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            {order.orderStatus == "completed" ? (
-              <div className="bg-red-100 flex items-center px-2 rounded-md">Cant update completed orders 🚫</div>
+            {order.orderStatus === "completed" ? (
+              <div className="bg-red-100 flex items-center px-2 rounded-md">
+                Can't update completed orders 🚫
+              </div>
             ) : (
               <Button
                 className="bg-blue-600 hover:bg-blue-700"
