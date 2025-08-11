@@ -1,17 +1,35 @@
-
-
-
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Import Textarea
+import { Textarea } from "@/components/ui/textarea";
 import { useParams, useRouter } from "next/navigation";
 import { useUpdateCustomerMutation, useGetCustomerQuery } from "@/redux/api/customers/customersApi";
 import { toast } from "react-hot-toast";
 import { Customer } from "@/types";
+
+// Utility function to format phone numbers
+const formatPhoneNumber = (value: string, inputElement: HTMLInputElement | null): string => {
+  // Remove all non-digits
+  const digits = value.replace(/\D/g, '');
+  
+  // If less than 10 digits, return as is (partial input)
+  if (digits.length < 10) {
+    return digits;
+  }
+  
+  // Format to (XXX)XXX-XXXX
+  if (digits.length >= 10) {
+    const areaCode = digits.slice(0, 3);
+    const prefix = digits.slice(3, 6);
+    const lineNumber = digits.slice(6, 10);
+    return `(${areaCode})${prefix}-${lineNumber}`;
+  }
+  
+  return digits;
+};
 
 export default function EditCustomerPage() {
   const { id } = useParams();
@@ -46,6 +64,9 @@ export default function EditCustomerPage() {
     updatedAt: "",
     note: "",
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const storePhoneRef = useRef<HTMLInputElement>(null);
+  const storePersonPhoneRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (customerData?.data) {
@@ -53,7 +74,7 @@ export default function EditCustomerPage() {
         ...prev,
         ...customerData.data,
         isCustomerSourceProspect: customerData.data.isCustomerSourceProspect ?? false,
-        note: customerData.data.note || "", // Ensure note is set from fetched data
+        note: customerData.data.note || "",
       }));
     }
   }, [customerData]);
@@ -63,7 +84,28 @@ export default function EditCustomerPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let formattedValue = value;
+    const inputElement = e.target as HTMLInputElement;
+
+    // Apply phone number formatting for storePhone and storePersonPhone
+    if (name === "storePhone" || name === "storePersonPhone") {
+      formattedValue = formatPhoneNumber(value, inputElement);
+      console.log(`Formatting ${name}: ${value} -> ${formattedValue}`);
+      // Maintain cursor position
+      const cursorPosition = inputElement.selectionStart || 0;
+      const digitsBefore = value.replace(/\D/g, '').slice(0, cursorPosition).length;
+      const newValue = formatPhoneNumber(value, null);
+      const newCursorPosition = newValue
+        .split('')
+        .reduce((count, char, i) => (i < cursorPosition && /\d/.test(char) ? count + 1 : count), 0);
+      setTimeout(() => {
+        inputElement.selectionStart = newCursorPosition;
+        inputElement.selectionEnd = newCursorPosition;
+      }, 0);
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: formattedValue }));
+    setValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleDeliveryDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,9 +123,9 @@ export default function EditCustomerPage() {
     const file = e.target.files?.[0];
     if (file) {
       const formDataImg = new FormData();
-      formDataImg.append("key", process.env.NEXT_PUBLIC_IMGBB_API_KEY || "YOUR_IMGBB_API_KEY"); // Replace with your ImgBB API key
+      formDataImg.append("key", process.env.NEXT_PUBLIC_IMGBB_API_KEY || "YOUR_IMGBB_API_KEY");
       formDataImg.append("image", file);
-      formDataImg.append("expiration", "600"); // Optional: 10-minute expiration
+      formDataImg.append("expiration", "600");
 
       try {
         const response = await fetch("https://api.imgbb.com/1/upload", {
@@ -104,8 +146,63 @@ export default function EditCustomerPage() {
     }
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.storeName.trim()) {
+      errors.storeName = "Store name is required.";
+    }
+    if (!formData.storePhone.match(/^\(\d{3}\)\d{3}-\d{4}$/) || formData.storePhone.replace(/\D/g, '').length !== 10) {
+      errors.storePhone = "Store phone must be a valid 10-digit number in format (XXX)XXX-XXXX.";
+    }
+    if (!formData.storePersonName.trim()) {
+      errors.storePersonName = "Authorized person name is required.";
+    }
+    if (!formData.storePersonPhone.match(/^\(\d{3}\)\d{3}-\d{4}$/) || formData.storePersonPhone.replace(/\D/g, '').length !== 10) {
+      errors.storePersonPhone = "Cell phone must be a valid 10-digit number in format (XXX)XXX-XXXX.";
+    }
+    if (!formData.storePersonEmail.match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
+      errors.storePersonEmail = "Invalid email format.";
+    }
+    if (!formData.billingAddress.trim()) {
+      errors.billingAddress = "Billing address is required.";
+    }
+    if (!formData.billingCity.trim()) {
+      errors.billingCity = "Billing city is required.";
+    }
+    if (!formData.billingState.trim()) {
+      errors.billingState = "Billing state is required.";
+    }
+    if (!formData.billingZipcode.match(/^\d{5}$/)) {
+      errors.billingZipcode = "Billing zipcode must be 5 digits.";
+    }
+    if (!formData.shippingAddress.trim()) {
+      errors.shippingAddress = "Shipping address is required.";
+    }
+    if (!formData.shippingCity.trim()) {
+      errors.shippingCity = "Shipping city is required.";
+    }
+    if (!formData.shippingState.trim()) {
+      errors.shippingState = "Shipping state is required.";
+    }
+    if (!formData.shippingZipcode.match(/^\d{5}$/)) {
+      errors.shippingZipcode = "Shipping zipcode must be 5 digits.";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors.");
+      return;
+    }
+
+    console.log("Submitting payload:", JSON.stringify(formData, null, 2));
+
     try {
       await updateCustomer({ id: formData._id, data: formData }).unwrap();
       toast.success("Customer updated successfully");
@@ -129,7 +226,11 @@ export default function EditCustomerPage() {
               value={formData.storeName}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.storeName && (
+              <span className="text-red-500 text-sm">{validationErrors.storeName}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="storePersonName">Auth Person Name</Label>
@@ -139,7 +240,11 @@ export default function EditCustomerPage() {
               value={formData.storePersonName}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.storePersonName && (
+              <span className="text-red-500 text-sm">{validationErrors.storePersonName}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="storePhone">Store Phone</Label>
@@ -149,8 +254,15 @@ export default function EditCustomerPage() {
               type="tel"
               value={formData.storePhone}
               onChange={handleChange}
+              placeholder="(XXX)XXX-XXXX"
+              maxLength={14}
+              ref={storePhoneRef}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.storePhone && (
+              <span className="text-red-500 text-sm">{validationErrors.storePhone}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="storePersonPhone">Cell Phone</Label>
@@ -160,8 +272,15 @@ export default function EditCustomerPage() {
               type="tel"
               value={formData.storePersonPhone}
               onChange={handleChange}
+              placeholder="(XXX)XXX-XXXX"
+              maxLength={14}
+              ref={storePersonPhoneRef}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.storePersonPhone && (
+              <span className="text-red-500 text-sm">{validationErrors.storePersonPhone}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="storePersonEmail">Store Email</Label>
@@ -172,7 +291,11 @@ export default function EditCustomerPage() {
               value={formData.storePersonEmail}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.storePersonEmail && (
+              <span className="text-red-500 text-sm">{validationErrors.storePersonEmail}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="salesTaxId">Sales Tax ID</Label>
@@ -201,13 +324,14 @@ export default function EditCustomerPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="bankACHAccountInfo">Bank ACH Info</Label>
-            <Input
+            <Label htmlFor="bankACHAccountInfo">Bank ACH Account Info</Label>
+            <Textarea
               id="bankACHAccountInfo"
               name="bankACHAccountInfo"
               value={formData.bankACHAccountInfo}
               onChange={handleChange}
               className="w-full text-gray-700"
+              rows={4}
             />
           </div>
           <div className="space-y-2">
@@ -218,7 +342,11 @@ export default function EditCustomerPage() {
               value={formData.billingAddress}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.billingAddress && (
+              <span className="text-red-500 text-sm">{validationErrors.billingAddress}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="billingCity">Billing City</Label>
@@ -228,7 +356,11 @@ export default function EditCustomerPage() {
               value={formData.billingCity}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.billingCity && (
+              <span className="text-red-500 text-sm">{validationErrors.billingCity}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="billingState">Billing State</Label>
@@ -238,7 +370,11 @@ export default function EditCustomerPage() {
               value={formData.billingState}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.billingState && (
+              <span className="text-red-500 text-sm">{validationErrors.billingState}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="billingZipcode">Billing Zipcode</Label>
@@ -248,7 +384,11 @@ export default function EditCustomerPage() {
               value={formData.billingZipcode}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.billingZipcode && (
+              <span className="text-red-500 text-sm">{validationErrors.billingZipcode}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="shippingAddress">Shipping Address</Label>
@@ -258,7 +398,11 @@ export default function EditCustomerPage() {
               value={formData.shippingAddress}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.shippingAddress && (
+              <span className="text-red-500 text-sm">{validationErrors.shippingAddress}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="shippingCity">Shipping City</Label>
@@ -268,7 +412,11 @@ export default function EditCustomerPage() {
               value={formData.shippingCity}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.shippingCity && (
+              <span className="text-red-500 text-sm">{validationErrors.shippingCity}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="shippingState">Shipping State</Label>
@@ -278,7 +426,11 @@ export default function EditCustomerPage() {
               value={formData.shippingState}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.shippingState && (
+              <span className="text-red-500 text-sm">{validationErrors.shippingState}</span>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="shippingZipcode">Shipping Zipcode</Label>
@@ -288,10 +440,13 @@ export default function EditCustomerPage() {
               value={formData.shippingZipcode}
               onChange={handleChange}
               className="w-full text-gray-700"
+              required
             />
+            {validationErrors.shippingZipcode && (
+              <span className="text-red-500 text-sm">{validationErrors.shippingZipcode}</span>
+            )}
           </div>
-          {/* Add the Note field here */}
-          <div className="space-y-2 md:col-span-2"> {/* Make it span two columns for better layout */}
+          <div className="space-y-2 md:col-span-2">
             <Label htmlFor="note">Note</Label>
             <Textarea
               id="note"
@@ -299,26 +454,13 @@ export default function EditCustomerPage() {
               value={formData.note}
               onChange={handleChange}
               className="w-full text-gray-700"
-              rows={4} // Adjust rows as needed for the textarea
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2"> {/* Make it span two columns for better layout */}
-            <Label htmlFor="note">Bank ACH Account Information</Label>
-            <Textarea
-              id="note"
-              name="note"
-              value={formData.bankACHAccountInfo}
-              onChange={handleChange}
-              className="w-full text-gray-700"
-              rows={4} // Adjust rows as needed for the textarea
+              rows={4}
             />
           </div>
         </div>
 
-        {/* image start here */}
-
         <div className="grid md:grid-cols-4 py-4 gap-6">
-          <div className="space-y-2 ">
+          <div className="space-y-2">
             <Label htmlFor="creditApplication">Credit Application</Label>
             <div className="border-2 border-dashed border-gray-300 p-4 rounded-lg text-center">
               {formData.creditApplication ? (
@@ -440,9 +582,11 @@ export default function EditCustomerPage() {
           </div>
         </div>
         <div className="flex justify-end gap-4">
-          <Button type="button"
-          onClick={() => router.push("/dashboard/customers")}
-            className="bg-gray-500 text-white hover:bg-gray-600">
+          <Button
+            type="button"
+            onClick={() => router.push("/dashboard/customers")}
+            className="bg-gray-500 text-white hover:bg-gray-600"
+          >
             Cancel
           </Button>
           <Button type="submit" className="bg-red-600 text-white hover:bg-red-700">

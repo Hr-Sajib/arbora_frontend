@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -47,11 +46,11 @@ interface AssignedSalesPerson {
   createdAt: string;
   updatedAt: string;
   __v: number;
-  password?: string; // Optional, as it might not always be returned
+  password?: string;
 }
 export interface FollowUpActivity {
   activity: string;
-  activityDate: string; // ISO date string (e.g., "2025-07-10")
+  activityDate: string;
   activityMedium: string;
 }
 
@@ -71,18 +70,38 @@ interface FormData {
   leadSource: string;
   note: string;
   status: string;
-  assignedSalesPerson: AssignedSalesPerson | string | null; // Allow string for _id
+  assignedSalesPerson: AssignedSalesPerson | string | null;
   followUpActivities: FollowUpActivity[];
   quotedList: QuotedListItem[];
   competitorStatement: string;
 }
+
+// Utility function to format phone numbers
+const formatPhoneNumber = (value: string): string => {
+  // Remove all non-digits
+  const digits = value.replace(/\D/g, '');
+  
+  // If less than 10 digits, return as is (partial input)
+  if (digits.length < 10) {
+    return digits;
+  }
+  
+  // Format to (XXX)XXX-XXXX
+  if (digits.length >= 10) {
+    const areaCode = digits.slice(0, 3);
+    const prefix = digits.slice(3, 6);
+    const lineNumber = digits.slice(6, 10);
+    return `(${areaCode})${prefix}-${lineNumber}`;
+  }
+  
+  return digits;
+};
 
 export default function UpdateProspectPage({
   prospectId,
 }: {
   prospectId: string;
 }): React.ReactElement {
-  // --- ALL HOOKS MUST BE CALLED HERE, UNCONDITIONALLY AND AT THE TOP LEVEL ---
   const {
     data: prospectResponse,
     isLoading,
@@ -101,9 +120,9 @@ export default function UpdateProspectPage({
   const [updateProspect, { isLoading: isSaving }] = useUpdateProspectMutation();
   const router = useRouter();
   const [formData, setFormData] = useState<FormData | null>(null);
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>(
+    {}
+  );
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [newQuote, setNewQuote] = useState<QuotedListItem>({
@@ -118,8 +137,11 @@ export default function UpdateProspectPage({
     activityDate: "",
     activityMedium: "call",
   });
-
+  const [productSearch, setProductSearch] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [role, setRole] = useState("");
+  const skipSalesUsersRef = useRef(role !== "admin");
+
   useEffect(() => {
     const cookies = document.cookie.split("; ");
     const tokenCookie = cookies.find((cookie) => cookie.startsWith("role="));
@@ -127,12 +149,10 @@ export default function UpdateProspectPage({
     setRole(role);
   }, []);
 
-  const skipSalesUsersRef = useRef(role !== "admin");
   useEffect(() => {
     skipSalesUsersRef.current = role !== "admin";
   }, [role]);
 
-  // --- useEffects to handle data loading and initialization ---
   useEffect(() => {
     if (prospectResponse?.data && !formData) {
       const processedQuotedList = prospectResponse.data.quotedList.map(
@@ -148,7 +168,7 @@ export default function UpdateProspectPage({
       setFormData({
         ...prospectResponse.data,
         quotedList: processedQuotedList,
-        assignedSalesPerson: prospectResponse.data.assignedSalesPerson?._id || null, // Use _id string
+        assignedSalesPerson: prospectResponse.data.assignedSalesPerson?._id || null,
       });
     }
   }, [prospectResponse, formData]);
@@ -165,7 +185,14 @@ export default function UpdateProspectPage({
     }
   }, [salesError]);
 
-  // --- Conditional Rendering for Loading/Error States ---
+  useEffect(() => {
+    if (productSearch) {
+      setIsDropdownOpen(true);
+    } else {
+      setIsDropdownOpen(false);
+    }
+  }, [productSearch]);
+
   if (isLoading || !formData) {
     return <div className="min-h-screen p-4 text-center">Loading...</div>;
   }
@@ -184,10 +211,17 @@ export default function UpdateProspectPage({
     >
   ) => {
     const { name, value } = e.target;
+    let formattedValue = value;
+
+    // Apply phone number formatting for storePhone and storePersonPhone
+    if (name === "storePhone" || name === "storePersonPhone") {
+      formattedValue = formatPhoneNumber(value);
+    }
+
     if (name === "assignedSalesPerson") {
       setFormData((prev) => ({ ...prev!, [name]: value || null }));
     } else {
-      setFormData((prev) => ({ ...prev!, [name]: value }));
+      setFormData((prev) => ({ ...prev!, [name]: formattedValue }));
     }
     setValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
@@ -258,6 +292,22 @@ export default function UpdateProspectPage({
     }
   };
 
+  const handleProductSelect = (product: Product) => {
+    setNewQuote({
+      productObjId: product._id || "",
+      itemNumber: product.itemNumber,
+      itemName: product.name,
+      price: product.salesPrice,
+      packetSize: product.packetSize || "",
+    });
+    setProductSearch(product.name);
+    setIsDropdownOpen(false);
+  };
+
+  const filteredAvailableProducts = inventoryData?.data?.filter((product: Product) =>
+    product.name.toLowerCase().includes(productSearch.toLowerCase())
+  ) || [];
+
   const handleFollowUpInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -289,6 +339,8 @@ export default function UpdateProspectPage({
       price: 0,
       packetSize: "",
     });
+    setProductSearch("");
+    setIsDropdownOpen(false);
     setIsQuoteModalOpen(false);
   };
 
@@ -403,7 +455,7 @@ export default function UpdateProspectPage({
     );
 
     const payload: Partial<FormData> = {
-      _id: formData._id!, // Assert _id is string
+      _id: formData._id!,
       storeName: formData.storeName,
       storePhone: formData.storePhone,
       storePersonEmail: formData.storePersonEmail,
@@ -424,16 +476,11 @@ export default function UpdateProspectPage({
       competitorStatement: formData.competitorStatement,
     };
 
-    // Debugging: Log payload
-    console.log("Submitting payload:", JSON.stringify(payload, null, 2)); // Temporary debug
-
     try {
-      const result = await updateProspect(payload as { _id: string } & Partial<FormData>).unwrap(); // Type assertion to satisfy updateProspect
-      console.log("Update response:", result); // Temporary debug
+      const result = await updateProspect(payload as { _id: string } & Partial<FormData>).unwrap();
       toast.success("Prospect updated successfully");
       router.push("/dashboard/prospact");
     } catch (err: any) {
-      console.error("Update error:", err); // Temporary debug
       const errorMessage =
         err?.data?.message || err?.message || "Unknown error";
       toast.error(`Update failed: ${errorMessage}`);
@@ -499,7 +546,7 @@ export default function UpdateProspectPage({
               type="tel"
               value={formData.storePhone}
               onChange={handleInputChange}
-              placeholder="Enter store phone number (e.g., (555)123-4567)"
+              placeholder="(XXX)XXX-XXXX"
               className="w-full"
             />
             {validationErrors.storePhone && (
@@ -535,7 +582,7 @@ export default function UpdateProspectPage({
               type="tel"
               value={formData.storePersonPhone}
               onChange={handleInputChange}
-              placeholder="Enter cell phone number (e.g., (555)123-4567)"
+              placeholder="(XXX)XXX-XXXX"
               className="w-full"
             />
             {validationErrors.storePersonPhone && (
@@ -797,7 +844,12 @@ export default function UpdateProspectPage({
           <select
             id="assignedSalesPerson"
             name="assignedSalesPerson"
-            value={typeof formData.assignedSalesPerson === "object" && formData.assignedSalesPerson !== null ? formData.assignedSalesPerson._id : formData.assignedSalesPerson || ""}
+            value={
+              typeof formData.assignedSalesPerson === "object" &&
+              formData.assignedSalesPerson !== null
+                ? formData.assignedSalesPerson._id
+                : formData.assignedSalesPerson || ""
+            }
             onChange={handleInputChange}
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             disabled={role !== "admin"}
@@ -941,24 +993,45 @@ export default function UpdateProspectPage({
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Add Quote Product</h2>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="productObjId">Product ID</Label>
-                <select
-                  id="productObjId"
-                  name="productObjId"
-                  value={newQuote.productObjId}
-                  onChange={handleQuoteInputChange}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isInventoryLoading}
-                >
-                  <option value="">Select Product</option>
-                  {inventoryData?.data?.map((product: Product) => (
-                    <option key={product._id} value={product._id}>
-                      {product.name} (Item #: {product.itemNumber})
-                    </option>
-                  )) || <option disabled>No products available</option>}
-                </select>
+              <div className="space-y-2 relative">
+                <Label htmlFor="productSearch">Product Name</Label>
+                <Input
+                  id="productSearch"
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  placeholder="Search by product name..."
+                  className="w-full mb-2"
+                />
+                {isDropdownOpen && productSearch && filteredAvailableProducts.length > 0 && (
+                  <div className="absolute z-10 w-full max-h-40 overflow-y-auto bg-white border rounded-md shadow-lg mt-1">
+                    {filteredAvailableProducts.map((product: Product) => (
+                      <div
+                        key={product._id}
+                        onClick={() => {
+                          handleProductSelect(product);
+                          setIsDropdownOpen(false);
+                        }}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {product.name} (Item #: {product.itemNumber})
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {isDropdownOpen && productSearch && filteredAvailableProducts.length === 0 && (
+                  <div className="p-2 text-gray-500">No products found</div>
+                )}
               </div>
+
+              {
+                newQuote.itemName ? 
+                <p className="w-full border-2 p-2 border-green-500 rounded-lg ">{newQuote.itemName}</p>
+                : null
+              }
               <div className="space-y-2">
                 <Label htmlFor="itemNumber">Item Number</Label>
                 <Input

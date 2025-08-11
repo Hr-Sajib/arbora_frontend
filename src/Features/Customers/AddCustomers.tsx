@@ -266,10 +266,10 @@ const handleSubmit = async (e: React.FormEvent) => {
   try {
     const payload = {
       storeName: formData.storeName,
-      storePhone: formData.storePhone.replace(/\D/g, ""),
+      storePhone: formData.storePhone,
       storePersonEmail: formData.storePersonEmail,
       storePersonName: formData.storePersonName,
-      storePersonPhone: formData.storePersonPhone.replace(/\D/g, ""),
+      storePersonPhone: formData.storePersonPhone,
       billingAddress: formData.billingAddress,
       billingCity: formData.billingCity,
       billingState: formData.billingState,
