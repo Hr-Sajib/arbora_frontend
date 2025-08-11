@@ -59,8 +59,8 @@ const BestSellingProducts: React.FC = () => {
             <tr className="bg-[#EAF8E7] text-[#6A717F]">
               <th className="p-2">PRODUCT</th>
               <th className="p-2">TOTAL ORDER</th>
-              <th className="p-2">STATUS</th>
-              <th className="p-2">REVENUE %</th>
+              {/* <th className="p-2">STATUS</th> */}
+              <th className="p-2">REVENUE CONTIBUTION</th>
             </tr>
           </thead>
           <tbody>
@@ -68,14 +68,14 @@ const BestSellingProducts: React.FC = () => {
               <tr key={product._id} className="border-t">
                 <td className="flex items-center p-2">{product.name || 'Unknown Product'}</td>
                 <td className="p-2">{product.numberOfOrders}</td>
-                <td className="p-2">
+                {/* <td className="p-2">
                   <span className="flex items-center gap-1">
-                    <span className={`w-2 h-2 rounded-full ${product.totalQuantity > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full ${product.totalQuantity > product ? 'bg-green-500' : 'bg-red-500'}`}></span>
                     <span className={product.totalQuantity > 0 ? 'text-green-500' : 'text-red-500'}>
                       {product.totalQuantity > 0 ? 'Stock' : 'Stock Out'}
                     </span>
                   </span>
-                </td>
+                </td> */}
                 <td className="p-2">{(product.revenuePercentage).toFixed(2)}%</td>
               </tr>
             ))}
