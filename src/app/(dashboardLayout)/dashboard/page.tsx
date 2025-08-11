@@ -235,6 +235,8 @@ export default function AppSidebar() {
 
         {/* Bottom Section */}
         <div className="pt-4">
+          <p className="text-white  w-full p-2 border-gray-500 mb-2 rounded-md">Logged In ▶ {role === "admin" ? "Admin" : role === "salesuser" ? "Sales User" : "User"}</p>
+
           <Separator className="bg-[#242432] mb-4" />
           <SidebarMenu>
 
@@ -246,8 +248,6 @@ export default function AppSidebar() {
               </Link>
             )}
 
-            {/* User logout */}
-            <p className="text-white ml-4">{role === "admin" ? "Admin" : role === "salesuser" ? "Sales User" : "User"}</p>
             <div
               className="flex items-center gap-2 w-full mb-12 px-4 py-1 bg-white rounded-lg cursor-pointer"
               onClick={handleLogout}
